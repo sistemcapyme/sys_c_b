@@ -7,15 +7,21 @@ const client = new MercadoPagoConfig({
 
 const crearPreferencia = async (req, res) => {
   try {
-    const { titulo, precio, cantidad = 1, idReferencia, tipo } = req.body;
+    const { 
+      titulo, 
+      precio, 
+      cantidad = 1, 
+      idReferencia = `GEN-${Date.now()}`, 
+      tipo = 'general' 
+    } = req.body;
 
-    if (!titulo || !precio || !idReferencia || !tipo) {
-      return res.status(400).json({ success: false, message: 'Faltan campos requeridos' });
+    if (!titulo || !precio) {
+      return res.status(400).json({ success: false, message: 'Faltan el título o el precio' });
     }
 
     const preference = new Preference(client);
     const frontendUrl = process.env.FRONTEND_URL;
-    const backendUrl  = process.env.BACKEND_URL ;
+    const backendUrl  = process.env.BACKEND_URL;
 
     const response = await preference.create({
       body: {
