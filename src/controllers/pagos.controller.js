@@ -1,12 +1,11 @@
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
-import { PrismaClient } from '@prisma/client';
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+const { prisma } = require('../config/database');
 
-const prisma = new PrismaClient();
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
 });
 
-export const crearPreferencia = async (req, res) => {
+const crearPreferencia = async (req, res) => {
   try {
     const { titulo, precio, cantidad, idReferencia, tipo, returnUrl } = req.body;
 
@@ -49,7 +48,7 @@ export const crearPreferencia = async (req, res) => {
   }
 };
 
-export const webhook = async (req, res) => {
+const webhook = async (req, res) => {
   try {
     const { type, data } = req.body;
 
@@ -202,3 +201,5 @@ export const webhook = async (req, res) => {
     res.status(200).send('OK');
   }
 };
+
+module.exports = { crearPreferencia, webhook };

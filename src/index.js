@@ -26,7 +26,7 @@ const campanasRoutes       = require('./routes/campanas.routes');
 const inversionesRoutes    = require('./routes/inversiones.routes');
 const pagosRoutes          = require('./routes/pagos.routes');
 const campanasAdminRoutes = require('./routes/campanasAdmin.routes.js'); 
-const catalogosRoutes = require('./routes/catalogos.routes.js');
+const catalogosRoutes = require('./routes/catalogos.routes');
 const pagosController = require('./controllers/pagos.controller');
 
 const app = express();

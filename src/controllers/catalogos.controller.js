@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
-import { MercadoPagoConfig, Payment } from 'mercadopago';
+const { PrismaClient } = require('@prisma/client');
+const { MercadoPagoConfig, Payment } = require('mercadopago');
 
 const prisma = new PrismaClient();
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
-export const crearPdf = async (req, res) => {
+const crearPdf = async (req, res) => {
   try {
     const { titulo, descripcion, precio, linkDrive } = req.body;
     const nuevoPdf = await prisma.catalogoPdf.create({
@@ -16,7 +16,7 @@ export const crearPdf = async (req, res) => {
   }
 };
 
-export const obtenerTodosAdmin = async (req, res) => {
+const obtenerTodosAdmin = async (req, res) => {
   try {
     const pdfs = await prisma.catalogoPdf.findMany({
       orderBy: { createdAt: 'desc' }
@@ -27,7 +27,7 @@ export const obtenerTodosAdmin = async (req, res) => {
   }
 };
 
-export const obtenerPublicos = async (req, res) => {
+const obtenerPublicos = async (req, res) => {
   try {
     const pdfs = await prisma.catalogoPdf.findMany({
       select: {
@@ -46,7 +46,7 @@ export const obtenerPublicos = async (req, res) => {
   }
 };
 
-export const actualizarPdf = async (req, res) => {
+const actualizarPdf = async (req, res) => {
   try {
     const { id } = req.params;
     const { titulo, descripcion, precio, linkDrive } = req.body;
@@ -60,7 +60,7 @@ export const actualizarPdf = async (req, res) => {
   }
 };
 
-export const eliminarPdf = async (req, res) => {
+const eliminarPdf = async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.catalogoPdf.delete({ where: { id } });
@@ -70,7 +70,7 @@ export const eliminarPdf = async (req, res) => {
   }
 };
 
-export const descargarPdf = async (req, res) => {
+const descargarPdf = async (req, res) => {
   try {
     const { pdf_id, payment_id } = req.query;
     
@@ -97,4 +97,13 @@ export const descargarPdf = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+module.exports = {
+  crearPdf,
+  obtenerTodosAdmin,
+  obtenerPublicos,
+  actualizarPdf,
+  eliminarPdf,
+  descargarPdf
 };
