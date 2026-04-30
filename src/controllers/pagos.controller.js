@@ -7,52 +7,46 @@ const client = new MercadoPagoConfig({
 
 const crearPreferencia = async (req, res) => {
   try {
-    const { 
-      titulo, 
-      precio, 
-      cantidad = 1, 
-      idReferencia = `GEN-${Date.now()}`, 
-      tipo = 'general' 
-    } = req.body;
-
-    if (!titulo || !precio) {
-      return res.status(400).json({ success: false, message: 'Faltan el título o el precio' });
-    }
+    // 1. Extraemos exactamente lo que manda el frontend
+    const { titulo, precio, cantidad, idReferencia, tipo } = req.body;
 
     const preference = new Preference(client);
-    const frontendUrl = process.env.FRONTEND_URL;
-    const backendUrl  = process.env.BACKEND_URL;
 
     const response = await preference.create({
       body: {
         items: [
           {
-            id:         String(idReferencia),
-            title:      titulo,
-            quantity:   Number(cantidad),
+            title: titulo,
             unit_price: Number(precio),
-            currency_id: 'MXN',
-          },
+            quantity: Number(cantidad),
+            currency_id: 'MXN'
+          }
         ],
-        external_reference: String(idReferencia),
         back_urls: {
-          success: `${frontendUrl}/pago-exitoso`,
-          failure: `${frontendUrl}/pago-fallido`,
-          pending: `${frontendUrl}/pago-pendiente`,
+          success: 'https://capyme.com.mx/pago-exitoso',
+          failure: 'https://capyme.com.mx/pago-fallido',
+          pending: 'https://capyme.com.mx/pago-pendiente'
         },
         auto_return: 'approved',
+        // 2. FUNDAMENTAL PARA EL WEBHOOK
+        external_reference: idReferencia,
         metadata: {
-          idReferencia,
-          tipo,
-          usuarioId: req.user ? req.user.id : null,
+          tipo: tipo
         },
-        notification_url: `${backendUrl}/api/pagos/webhook`,
-      },
+        // 3. URL A LA QUE MERCADO PAGO AVISARÁ (Asegúrate de que la ruta /api/pagos sea la correcta en tu index.js)
+        notification_url: 'https://sys-c-b.onrender.com/api/pagos/webhook'
+      }
     });
 
-    res.json({ success: true, init_point: response.init_point, preference_id: response.id });
+    res.status(200).json({ 
+      success: true,
+      id: response.id, 
+      init_point: response.init_point 
+    });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al procesar pago', error: error.message });
+    console.error("Error al crear preferencia:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -206,7 +200,8 @@ const webhook = async (req, res) => {
 
     res.status(200).send('OK');
   } catch (error) {
-    res.status(200).send('OK');
+    console.error("Error en webhook:", error);
+    res.status(200).send('OK'); // MP requiere un 200 aunque falle algo internamente
   }
 };
 
