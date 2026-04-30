@@ -1,9 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const pagosController = require('../controllers/pagos.controller');
-const { verifyToken } = require('../middlewares/auth.middleware');
+import { Router } from 'express';
+import { crearPreferencia, webhook } from '../controllers/pagos.controller.js';
+import { verifyToken } from '../middlewares/auth.middleware.js';
 
-router.post('/crear-preferencia', verifyToken, pagosController.crearPreferencia);
-router.post('/webhook', pagosController.webhook);
+const router = Router();
 
-module.exports = router;
+router.post('/crear-preferencia', verifyToken, crearPreferencia);
+router.post('/webhook', webhook);
+
+export default router;
