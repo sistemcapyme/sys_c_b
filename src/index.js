@@ -26,7 +26,7 @@ const campanasRoutes       = require('./routes/campanas.routes');
 const inversionesRoutes    = require('./routes/inversiones.routes');
 const pagosRoutes          = require('./routes/pagos.routes');
 const campanasAdminRoutes = require('./routes/campanasAdmin.routes.js'); 
-
+const catalogosRoutes = require('./routes/catalogos.routes.js');
 const pagosController = require('./controllers/pagos.controller');
 
 const app = express();
@@ -76,6 +76,7 @@ app.use('/api/campanas',       campanasRoutes);
 app.use('/api/inversiones',    inversionesRoutes);
 app.use('/api/pagos',          pagosRoutes);
 app.use('/api/admin/campanas', campanasAdminRoutes)
+app.use('/api/catalogos', catalogosRoutes);
 
 app.use(errorHandler);
 

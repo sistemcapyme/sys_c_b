@@ -553,6 +553,16 @@ model ActualizacionCampana {
   @@map("actualizaciones_campana")
 }
 
+model CatalogoPdf {
+  id          String   @id @default(uuid())
+  titulo      String
+  descripcion String   @db.Text
+  precio      Float
+  linkDrive   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum EstadoAcceso {
   pendiente
   activo
