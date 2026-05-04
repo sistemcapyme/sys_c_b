@@ -1,4 +1,4 @@
-const express = require('0express');
+const express = require('express');
 const router = express.Router();
 const catalogosController = require('../controllers/catalogos.controller');
 
