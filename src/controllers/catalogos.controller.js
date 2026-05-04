@@ -6,9 +6,9 @@ const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN 
 
 const crearPdf = async (req, res) => {
   try {
-    const { titulo, descripcion, precio, linkDrive } = req.body;
+    const { titulo, descripcion, precio, linkDrive, activo } = req.body;
     const nuevoPdf = await prisma.catalogoPdf.create({
-      data: { titulo, descripcion, precio: parseFloat(precio), linkDrive, activo: true }
+      data: { titulo, descripcion, precio: parseFloat(precio), linkDrive, activo: activo ?? true }
     });
     res.status(201).json(nuevoPdf);
   } catch (error) {
@@ -85,6 +85,7 @@ const descargarPdf = async (req, res) => {
     const paymentClient = new Payment(client);
     const paymentInfo = await paymentClient.get({ id: payment_id });
 
+    // Verificamos que el pago esté aprobado y que la referencia externa coincida con el ID del PDF
     if (paymentInfo.status !== 'approved' || paymentInfo.external_reference !== pdf_id) {
       return res.status(403).json({ error: 'Pago no válido o no corresponde a este archivo' });
     }
@@ -97,7 +98,11 @@ const descargarPdf = async (req, res) => {
       return res.status(404).json({ error: 'PDF no encontrado' });
     }
 
-    res.status(200).json({ linkDrive: pdf.linkDrive });
+    // Retornamos el título para usarlo como nombre de archivo al descargar
+    res.status(200).json({ 
+      linkDrive: pdf.linkDrive,
+      titulo: pdf.titulo
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
