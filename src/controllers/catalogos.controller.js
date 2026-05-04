@@ -8,7 +8,7 @@ const crearPdf = async (req, res) => {
   try {
     const { titulo, descripcion, precio, linkDrive } = req.body;
     const nuevoPdf = await prisma.catalogoPdf.create({
-      data: { titulo, descripcion, precio: parseFloat(precio), linkDrive }
+      data: { titulo, descripcion, precio: parseFloat(precio), linkDrive, activo: true }
     });
     res.status(201).json(nuevoPdf);
   } catch (error) {
@@ -30,6 +30,7 @@ const obtenerTodosAdmin = async (req, res) => {
 const obtenerPublicos = async (req, res) => {
   try {
     const pdfs = await prisma.catalogoPdf.findMany({
+      where: { activo: true },
       select: {
         id: true,
         titulo: true,
@@ -49,10 +50,10 @@ const obtenerPublicos = async (req, res) => {
 const actualizarPdf = async (req, res) => {
   try {
     const { id } = req.params;
-    const { titulo, descripcion, precio, linkDrive } = req.body;
+    const { titulo, descripcion, precio, linkDrive, activo } = req.body;
     const pdfActualizado = await prisma.catalogoPdf.update({
       where: { id },
-      data: { titulo, descripcion, precio: parseFloat(precio), linkDrive }
+      data: { titulo, descripcion, precio: parseFloat(precio), linkDrive, activo }
     });
     res.status(200).json(pdfActualizado);
   } catch (error) {
@@ -63,8 +64,11 @@ const actualizarPdf = async (req, res) => {
 const eliminarPdf = async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.catalogoPdf.delete({ where: { id } });
-    res.status(200).json({ message: 'PDF eliminado' });
+    await prisma.catalogoPdf.update({ 
+      where: { id },
+      data: { activo: false }
+    });
+    res.status(200).json({ message: 'PDF eliminado lógicamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
