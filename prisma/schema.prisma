@@ -556,9 +556,10 @@ model ActualizacionCampana {
 model CatalogoPdf {
   id          String   @id @default(uuid())
   titulo      String
-  descripcion String   @db.Text
+  descripcion String
   precio      Float
   linkDrive   String
+  activo      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
