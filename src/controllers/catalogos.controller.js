@@ -1,14 +1,41 @@
 const { PrismaClient } = require('@prisma/client');
 const { MercadoPagoConfig, Payment } = require('mercadopago');
+const cloudinary = require('cloudinary').v2;
 
 const prisma = new PrismaClient();
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'catalogos_capyme' },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    uploadStream.end(fileBuffer);
+  });
+};
+
 const crearPdf = async (req, res) => {
   try {
     const { titulo, descripcion, precio, linkDrive, activo } = req.body;
+    let imagenUrl = null;
+
+    if (req.file) {
+      imagenUrl = await uploadToCloudinary(req.file.buffer);
+    }
+
     const nuevoPdf = await prisma.catalogoPdf.create({
-      data: { titulo, descripcion, precio: parseFloat(precio), linkDrive, activo: activo ?? true }
+      data: { 
+        titulo, 
+        descripcion, 
+        precio: parseFloat(precio), 
+        linkDrive, 
+        activo: activo === 'true' || activo === true,
+        imagenUrl
+      }
     });
     res.status(201).json(nuevoPdf);
   } catch (error) {
@@ -36,6 +63,7 @@ const obtenerPublicos = async (req, res) => {
         titulo: true,
         descripcion: true,
         precio: true,
+        imagenUrl: true,
         createdAt: true,
         updatedAt: true
       },
@@ -51,9 +79,22 @@ const actualizarPdf = async (req, res) => {
   try {
     const { id } = req.params;
     const { titulo, descripcion, precio, linkDrive, activo } = req.body;
+    
+    const dataToUpdate = { 
+      titulo, 
+      descripcion, 
+      precio: parseFloat(precio), 
+      linkDrive, 
+      activo: activo === 'true' || activo === true 
+    };
+
+    if (req.file) {
+      dataToUpdate.imagenUrl = await uploadToCloudinary(req.file.buffer);
+    }
+
     const pdfActualizado = await prisma.catalogoPdf.update({
       where: { id },
-      data: { titulo, descripcion, precio: parseFloat(precio), linkDrive, activo }
+      data: dataToUpdate
     });
     res.status(200).json(pdfActualizado);
   } catch (error) {
@@ -85,7 +126,6 @@ const descargarPdf = async (req, res) => {
     const paymentClient = new Payment(client);
     const paymentInfo = await paymentClient.get({ id: payment_id });
 
-    // Verificamos que el pago esté aprobado y que la referencia externa coincida con el ID del PDF
     if (paymentInfo.status !== 'approved' || paymentInfo.external_reference !== pdf_id) {
       return res.status(403).json({ error: 'Pago no válido o no corresponde a este archivo' });
     }
@@ -98,7 +138,6 @@ const descargarPdf = async (req, res) => {
       return res.status(404).json({ error: 'PDF no encontrado' });
     }
 
-    // Retornamos el título para usarlo como nombre de archivo al descargar
     res.status(200).json({ 
       linkDrive: pdf.linkDrive,
       titulo: pdf.titulo
