@@ -12,7 +12,6 @@ const uploadToCloudinary = async (fileBuffer, mimetype) => {
   return result.secure_url;
 };
 
-// Función para extraer el ID público de Cloudinary a partir de la URL segura
 const extractPublicId = (url) => {
   try {
     const parts = url.split('/');
@@ -21,7 +20,7 @@ const extractPublicId = (url) => {
     const filename = fileWithExt.split('.')[0];
     return `${folder}/${filename}`;
   } catch (error) {
-    console.error("Error al extraer Public ID de Cloudinary:", error);
+    console.error(error);
     return null;
   }
 };
@@ -88,7 +87,6 @@ const actualizarPdf = async (req, res) => {
     const { id } = req.params;
     const { titulo, descripcion, precio, linkDrive, activo } = req.body;
     
-    // Primero, traemos el registro actual para saber si ya tenía imagen
     const pdfExistente = await prisma.catalogoPdf.findUnique({ where: { id } });
     if (!pdfExistente) return res.status(404).json({ error: 'PDF no encontrado' });
 
@@ -100,16 +98,13 @@ const actualizarPdf = async (req, res) => {
       activo: activo === 'true' || activo === true 
     };
 
-    // Si nos enviaron un archivo nuevo...
     if (req.file) {
-      // 1. Si existía una imagen anterior, la eliminamos de Cloudinary
       if (pdfExistente.imagenUrl) {
         const publicId = extractPublicId(pdfExistente.imagenUrl);
         if (publicId) {
           await cloudinary.uploader.destroy(publicId);
         }
       }
-      // 2. Subimos la nueva imagen
       dataToUpdate.imagenUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
     }
 
@@ -126,12 +121,21 @@ const actualizarPdf = async (req, res) => {
 const eliminarPdf = async (req, res) => {
   try {
     const { id } = req.params;
-    // La eliminación es lógica (desactiva el recurso) por lo que la imagen se queda en Cloudinary.
-    await prisma.catalogoPdf.update({ 
-      where: { id },
-      data: { activo: false }
+
+    const pdfExistente = await prisma.catalogoPdf.findUnique({ where: { id } });
+    
+    if (pdfExistente && pdfExistente.imagenUrl) {
+      const publicId = extractPublicId(pdfExistente.imagenUrl);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+    }
+
+    await prisma.catalogoPdf.delete({ 
+      where: { id }
     });
-    res.status(200).json({ message: 'PDF eliminado lógicamente' });
+    
+    res.status(200).json({ message: 'PDF eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -142,14 +146,14 @@ const descargarPdf = async (req, res) => {
     const { pdf_id, payment_id } = req.query;
     
     if (!pdf_id || !payment_id) {
-      return res.status(400).json({ error: 'Faltan parámetros de validación' });
+      return res.status(400).json({ error: 'Faltan parámetros' });
     }
 
     const paymentClient = new Payment(client);
     const paymentInfo = await paymentClient.get({ id: payment_id });
 
     if (paymentInfo.status !== 'approved' || paymentInfo.external_reference !== pdf_id) {
-      return res.status(403).json({ error: 'Pago no válido o no corresponde a este archivo' });
+      return res.status(403).json({ error: 'Pago no válido' });
     }
 
     const pdf = await prisma.catalogoPdf.findUnique({
