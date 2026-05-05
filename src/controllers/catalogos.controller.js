@@ -90,13 +90,12 @@ const actualizarPdf = async (req, res) => {
     const pdfExistente = await prisma.catalogoPdf.findUnique({ where: { id } });
     if (!pdfExistente) return res.status(404).json({ error: 'PDF no encontrado' });
 
-    const dataToUpdate = { 
-      titulo, 
-      descripcion, 
-      precio: parseFloat(precio), 
-      linkDrive, 
-      activo: activo === 'true' || activo === true 
-    };
+    const dataToUpdate = {};
+    if (titulo !== undefined) dataToUpdate.titulo = titulo;
+    if (descripcion !== undefined) dataToUpdate.descripcion = descripcion;
+    if (precio !== undefined) dataToUpdate.precio = parseFloat(precio);
+    if (linkDrive !== undefined) dataToUpdate.linkDrive = linkDrive;
+    if (activo !== undefined) dataToUpdate.activo = activo === 'true' || activo === true;
 
     if (req.file) {
       if (pdfExistente.imagenUrl) {
@@ -146,14 +145,14 @@ const descargarPdf = async (req, res) => {
     const { pdf_id, payment_id } = req.query;
     
     if (!pdf_id || !payment_id) {
-      return res.status(400).json({ error: 'Faltan parámetros de validación' });
+      return res.status(400).json({ error: 'Faltan parámetros' });
     }
 
     const paymentClient = new Payment(client);
     const paymentInfo = await paymentClient.get({ id: payment_id });
 
     if (paymentInfo.status !== 'approved' || paymentInfo.external_reference !== pdf_id) {
-      return res.status(403).json({ error: 'Pago no válido o no corresponde a este archivo' });
+      return res.status(403).json({ error: 'Pago no válido' });
     }
 
     const pdf = await prisma.catalogoPdf.findUnique({
