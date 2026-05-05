@@ -17,10 +17,10 @@ const extractPublicId = (url) => {
     const parts = url.split('/');
     const fileWithExt = parts.pop();
     const folder = parts.pop();
-    const filename = fileWithExt.split('.')[0];
+    const lastDotIndex = fileWithExt.lastIndexOf('.');
+    const filename = lastDotIndex !== -1 ? fileWithExt.substring(0, lastDotIndex) : fileWithExt;
     return `${folder}/${filename}`;
   } catch (error) {
-    console.error(error);
     return null;
   }
 };
@@ -146,14 +146,14 @@ const descargarPdf = async (req, res) => {
     const { pdf_id, payment_id } = req.query;
     
     if (!pdf_id || !payment_id) {
-      return res.status(400).json({ error: 'Faltan parámetros' });
+      return res.status(400).json({ error: 'Faltan parámetros de validación' });
     }
 
     const paymentClient = new Payment(client);
     const paymentInfo = await paymentClient.get({ id: payment_id });
 
     if (paymentInfo.status !== 'approved' || paymentInfo.external_reference !== pdf_id) {
-      return res.status(403).json({ error: 'Pago no válido' });
+      return res.status(403).json({ error: 'Pago no válido o no corresponde a este archivo' });
     }
 
     const pdf = await prisma.catalogoPdf.findUnique({
