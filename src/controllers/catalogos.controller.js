@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
+const { MercadoPagoConfig, Payment } = require('mercadopago');
 const cloudinary = require('cloudinary').v2;
 
 const prisma = new PrismaClient();
@@ -10,6 +10,20 @@ const uploadToCloudinary = async (fileBuffer, mimetype) => {
   const dataURI = `data:${mimetype};base64,${b64}`;
   const result = await cloudinary.uploader.upload(dataURI, { folder: 'catalogos' });
   return result.secure_url;
+};
+
+// Función para extraer el ID público de Cloudinary a partir de la URL segura
+const extractPublicId = (url) => {
+  try {
+    const parts = url.split('/');
+    const fileWithExt = parts.pop();
+    const folder = parts.pop();
+    const filename = fileWithExt.split('.')[0];
+    return `${folder}/${filename}`;
+  } catch (error) {
+    console.error("Error al extraer Public ID de Cloudinary:", error);
+    return null;
+  }
 };
 
 const crearPdf = async (req, res) => {
@@ -74,6 +88,10 @@ const actualizarPdf = async (req, res) => {
     const { id } = req.params;
     const { titulo, descripcion, precio, linkDrive, activo } = req.body;
     
+    // Primero, traemos el registro actual para saber si ya tenía imagen
+    const pdfExistente = await prisma.catalogoPdf.findUnique({ where: { id } });
+    if (!pdfExistente) return res.status(404).json({ error: 'PDF no encontrado' });
+
     const dataToUpdate = { 
       titulo, 
       descripcion, 
@@ -82,7 +100,16 @@ const actualizarPdf = async (req, res) => {
       activo: activo === 'true' || activo === true 
     };
 
+    // Si nos enviaron un archivo nuevo...
     if (req.file) {
+      // 1. Si existía una imagen anterior, la eliminamos de Cloudinary
+      if (pdfExistente.imagenUrl) {
+        const publicId = extractPublicId(pdfExistente.imagenUrl);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
+      }
+      // 2. Subimos la nueva imagen
       dataToUpdate.imagenUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
     }
 
@@ -99,45 +126,12 @@ const actualizarPdf = async (req, res) => {
 const eliminarPdf = async (req, res) => {
   try {
     const { id } = req.params;
+    // La eliminación es lógica (desactiva el recurso) por lo que la imagen se queda en Cloudinary.
     await prisma.catalogoPdf.update({ 
       where: { id },
       data: { activo: false }
     });
     res.status(200).json({ message: 'PDF eliminado lógicamente' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const crearPreferenciaPago = async (req, res) => {
-  try {
-    const { idArticulo, titulo, precio } = req.body;
-    
-    const urlFrontend = process.env.FRONTEND_URL || req.headers.origin;
-
-    const preference = new Preference(client);
-    const response = await preference.create({
-      body: {
-        items: [
-          {
-            id: idArticulo,
-            title: titulo,
-            quantity: 1,
-            unit_price: Number(precio),
-            currency_id: 'MXN',
-          }
-        ],
-        back_urls: {
-          success: `${urlFrontend}/pago-exitoso`,
-          failure: `${urlFrontend}/pago-fallido`,
-          pending: `${urlFrontend}/pago-pendiente`
-        },
-        auto_return: 'approved',
-        external_reference: idArticulo,
-      }
-    });
-
-    res.status(200).json({ id: response.id, init_point: response.init_point });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -181,6 +175,5 @@ module.exports = {
   obtenerPublicos,
   actualizarPdf,
   eliminarPdf,
-  crearPreferenciaPago,
   descargarPdf
 };
