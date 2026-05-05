@@ -1,21 +1,15 @@
 const { PrismaClient } = require('@prisma/client');
-const { MercadoPagoConfig, Payment } = require('mercadopago');
+const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
 const cloudinary = require('cloudinary').v2;
 
 const prisma = new PrismaClient();
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
-const uploadToCloudinary = (fileBuffer) => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'catalogos_capyme' },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result.secure_url);
-      }
-    );
-    uploadStream.end(fileBuffer);
-  });
+const uploadToCloudinary = async (fileBuffer, mimetype) => {
+  const b64 = Buffer.from(fileBuffer).toString('base64');
+  const dataURI = `data:${mimetype};base64,${b64}`;
+  const result = await cloudinary.uploader.upload(dataURI, { folder: 'catalogos' });
+  return result.secure_url;
 };
 
 const crearPdf = async (req, res) => {
@@ -24,7 +18,7 @@ const crearPdf = async (req, res) => {
     let imagenUrl = null;
 
     if (req.file) {
-      imagenUrl = await uploadToCloudinary(req.file.buffer);
+      imagenUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
     }
 
     const nuevoPdf = await prisma.catalogoPdf.create({
@@ -89,7 +83,7 @@ const actualizarPdf = async (req, res) => {
     };
 
     if (req.file) {
-      dataToUpdate.imagenUrl = await uploadToCloudinary(req.file.buffer);
+      dataToUpdate.imagenUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
     }
 
     const pdfActualizado = await prisma.catalogoPdf.update({
@@ -110,6 +104,40 @@ const eliminarPdf = async (req, res) => {
       data: { activo: false }
     });
     res.status(200).json({ message: 'PDF eliminado lógicamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const crearPreferenciaPago = async (req, res) => {
+  try {
+    const { idArticulo, titulo, precio } = req.body;
+    
+    const urlFrontend = process.env.FRONTEND_URL || req.headers.origin;
+
+    const preference = new Preference(client);
+    const response = await preference.create({
+      body: {
+        items: [
+          {
+            id: idArticulo,
+            title: titulo,
+            quantity: 1,
+            unit_price: Number(precio),
+            currency_id: 'MXN',
+          }
+        ],
+        back_urls: {
+          success: `${urlFrontend}/pago-exitoso`,
+          failure: `${urlFrontend}/pago-fallido`,
+          pending: `${urlFrontend}/pago-pendiente`
+        },
+        auto_return: 'approved',
+        external_reference: idArticulo,
+      }
+    });
+
+    res.status(200).json({ id: response.id, init_point: response.init_point });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -153,5 +181,6 @@ module.exports = {
   obtenerPublicos,
   actualizarPdf,
   eliminarPdf,
+  crearPreferenciaPago,
   descargarPdf
 };
