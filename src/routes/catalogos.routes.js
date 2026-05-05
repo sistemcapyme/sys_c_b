@@ -9,7 +9,6 @@ router.get('/admin', catalogosController.obtenerTodosAdmin);
 router.get('/publicos', catalogosController.obtenerPublicos);
 router.put('/:id', upload.single('imagen'), catalogosController.actualizarPdf);
 router.delete('/:id', catalogosController.eliminarPdf);
-router.post('/crear-preferencia', catalogosController.crearPreferenciaPago);
 router.get('/descargar', catalogosController.descargarPdf);
 
 module.exports = router;
