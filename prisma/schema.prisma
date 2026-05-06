@@ -330,6 +330,9 @@ model EnlaceRecurso {
   creadoPor     Int             @map("creado_por")
   fechaCreacion DateTime?       @default(now()) @map("fecha_creacion") @db.Timestamp(0)
   creador       Usuario         @relation(fields: [creadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  formato         String   @default("video")
+  imagenUrl       String?
+  imagenPublicId  String?
 
   @@index([creadoPor])
   @@index([activo])
