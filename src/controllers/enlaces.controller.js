@@ -7,6 +7,26 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const uploadToCloudinary = async (fileBuffer, mimetype) => {
+  const b64 = Buffer.from(fileBuffer).toString('base64');
+  const dataURI = `data:${mimetype};base64,${b64}`;
+  const result = await cloudinary.uploader.upload(dataURI, { folder: 'recursos' });
+  return result.secure_url;
+};
+
+const extractPublicId = (url) => {
+  try {
+    const parts = url.split('/');
+    const fileWithExt = parts.pop();
+    const folder = parts.pop();
+    const lastDotIndex = fileWithExt.lastIndexOf('.');
+    const filename = lastDotIndex !== -1 ? fileWithExt.substring(0, lastDotIndex) : fileWithExt;
+    return `${folder}/${filename}`;
+  } catch (error) {
+    return null;
+  }
+};
+
 const log = async (usuarioId, accion, registroId, descripcion, ip) => {
   try {
     await prisma.historialAccion.create({
@@ -88,21 +108,16 @@ const obtenerEnlacePorId = async (req, res) => {
 
 const crearEnlace = async (req, res) => {
   try {
-    const { titulo, descripcion, url, tipo, categoria, visiblePara, costo, formato, imagen } = req.body;
+    const { titulo, descripcion, url, tipo, categoria, visiblePara, costo, formato } = req.body;
 
     if (!titulo || !url || !formato) {
       return res.status(400).json({ success: false, message: 'Título, URL y formato son requeridos' });
     }
 
     let imagenUrl = null;
-    let imagenPublicId = null;
 
-    if (imagen) {
-      const uploadResponse = await cloudinary.uploader.upload(imagen, {
-        folder: 'recursos',
-      });
-      imagenUrl = uploadResponse.secure_url;
-      imagenPublicId = uploadResponse.public_id;
+    if (req.file) {
+      imagenUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
     }
 
     const data = {
@@ -114,7 +129,6 @@ const crearEnlace = async (req, res) => {
       costo: costo != null ? parseFloat(costo) : 0,
       creadoPor: req.user.id,
       imagenUrl,
-      imagenPublicId,
     };
 
     if (descripcion) data.descripcion = descripcion;
@@ -136,23 +150,19 @@ const crearEnlace = async (req, res) => {
 const actualizarEnlace = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { titulo, descripcion, url, tipo, categoria, visiblePara, costo, formato, imagen } = req.body;
+    const { titulo, descripcion, url, tipo, categoria, visiblePara, costo, formato } = req.body;
 
     const recursoExistente = await prisma.enlaceRecurso.findUnique({ where: { id } });
     if (!recursoExistente) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
 
     let imagenUrl = recursoExistente.imagenUrl;
-    let imagenPublicId = recursoExistente.imagenPublicId;
 
-    if (imagen && imagen.startsWith('data:image')) {
-      if (imagenPublicId) {
-        await cloudinary.uploader.destroy(imagenPublicId);
+    if (req.file) {
+      if (recursoExistente.imagenUrl) {
+        const publicId = extractPublicId(recursoExistente.imagenUrl);
+        if (publicId) await cloudinary.uploader.destroy(publicId);
       }
-      const uploadResponse = await cloudinary.uploader.upload(imagen, {
-        folder: 'recursos',
-      });
-      imagenUrl = uploadResponse.secure_url;
-      imagenPublicId = uploadResponse.public_id;
+      imagenUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
     }
 
     const data = {};
@@ -165,7 +175,6 @@ const actualizarEnlace = async (req, res) => {
     if (descripcion !== undefined) data.descripcion = descripcion || null;
     if (categoria !== undefined) data.categoria = categoria || null;
     data.imagenUrl = imagenUrl;
-    data.imagenPublicId = imagenPublicId;
 
     const enlace = await prisma.enlaceRecurso.update({
       where: { id },
@@ -188,8 +197,9 @@ const eliminarEnlace = async (req, res) => {
 
     if (!recurso) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
 
-    if (recurso.imagenPublicId) {
-      await cloudinary.uploader.destroy(recurso.imagenPublicId);
+    if (recurso.imagenUrl) {
+      const publicId = extractPublicId(recurso.imagenUrl);
+      if (publicId) await cloudinary.uploader.destroy(publicId);
     }
 
     await prisma.enlaceRecurso.delete({ where: { id } });
@@ -232,7 +242,6 @@ const solicitarAcceso = async (req, res) => {
   try {
     const enlaceId = parseInt(req.params.id);
     const uid = req.user.id;
-    const { urlRetorno } = req.body;
 
     const enlace = await prisma.enlaceRecurso.findUnique({ where: { id: enlaceId } });
     if (!enlace) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
