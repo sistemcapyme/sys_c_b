@@ -1,4 +1,11 @@
 const { prisma } = require('../config/database');
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const log = async (usuarioId, accion, registroId, descripcion, ip) => {
   try {
@@ -62,8 +69,7 @@ const obtenerEnlaces = async (req, res) => {
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[obtenerEnlaces]', error);
-    res.status(500).json({ success: false, message: 'Error al obtener catálogos', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al obtener recursos', error: error.message });
   }
 };
 
@@ -73,29 +79,42 @@ const obtenerEnlacePorId = async (req, res) => {
       where: { id: parseInt(req.params.id) },
       include: { creador: { select: { id: true, nombre: true, apellido: true } } },
     });
-    if (!enlace) return res.status(404).json({ success: false, message: 'Catálogo no encontrado' });
+    if (!enlace) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
     res.json({ success: true, data: enlace });
   } catch (error) {
-    console.error('[obtenerEnlacePorId]', error);
-    res.status(500).json({ success: false, message: 'Error al obtener catálogo', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al obtener recurso', error: error.message });
   }
 };
 
 const crearEnlace = async (req, res) => {
   try {
-    const { titulo, descripcion, url, tipo, categoria, visiblePara, costo } = req.body;
+    const { titulo, descripcion, url, tipo, categoria, visiblePara, costo, formato, imagen } = req.body;
 
-    if (!titulo || !url) {
-      return res.status(400).json({ success: false, message: 'Título y URL son requeridos' });
+    if (!titulo || !url || !formato) {
+      return res.status(400).json({ success: false, message: 'Título, URL y formato son requeridos' });
+    }
+
+    let imagenUrl = null;
+    let imagenPublicId = null;
+
+    if (imagen) {
+      const uploadResponse = await cloudinary.uploader.upload(imagen, {
+        folder: 'recursos',
+      });
+      imagenUrl = uploadResponse.secure_url;
+      imagenPublicId = uploadResponse.public_id;
     }
 
     const data = {
       titulo,
       url,
       tipo: tipo || 'otro',
+      formato,
       visiblePara: visiblePara || 'todos',
       costo: costo != null ? parseFloat(costo) : 0,
       creadoPor: req.user.id,
+      imagenUrl,
+      imagenPublicId,
     };
 
     if (descripcion) data.descripcion = descripcion;
@@ -106,28 +125,47 @@ const crearEnlace = async (req, res) => {
       include: { creador: { select: { id: true, nombre: true, apellido: true } } },
     });
 
-    await log(req.user.id, 'CREATE', enlace.id, `Catálogo creado: "${enlace.titulo}"`, req.ip);
+    await log(req.user.id, 'CREATE', enlace.id, `Recurso creado: "${enlace.titulo}"`, req.ip);
 
-    res.status(201).json({ success: true, message: 'Catálogo creado exitosamente', data: enlace });
+    res.status(201).json({ success: true, message: 'Recurso creado exitosamente', data: enlace });
   } catch (error) {
-    console.error('[crearEnlace]', error);
-    res.status(500).json({ success: false, message: 'Error al crear catálogo', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al crear recurso', error: error.message });
   }
 };
 
 const actualizarEnlace = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { titulo, descripcion, url, tipo, categoria, visiblePara, costo } = req.body;
+    const { titulo, descripcion, url, tipo, categoria, visiblePara, costo, formato, imagen } = req.body;
+
+    const recursoExistente = await prisma.enlaceRecurso.findUnique({ where: { id } });
+    if (!recursoExistente) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
+
+    let imagenUrl = recursoExistente.imagenUrl;
+    let imagenPublicId = recursoExistente.imagenPublicId;
+
+    if (imagen && imagen.startsWith('data:image')) {
+      if (imagenPublicId) {
+        await cloudinary.uploader.destroy(imagenPublicId);
+      }
+      const uploadResponse = await cloudinary.uploader.upload(imagen, {
+        folder: 'recursos',
+      });
+      imagenUrl = uploadResponse.secure_url;
+      imagenPublicId = uploadResponse.public_id;
+    }
 
     const data = {};
     if (titulo !== undefined) data.titulo = titulo;
     if (url !== undefined) data.url = url;
     if (tipo !== undefined) data.tipo = tipo;
+    if (formato !== undefined) data.formato = formato;
     if (visiblePara !== undefined) data.visiblePara = visiblePara;
     if (costo !== undefined) data.costo = parseFloat(costo) || 0;
     if (descripcion !== undefined) data.descripcion = descripcion || null;
     if (categoria !== undefined) data.categoria = categoria || null;
+    data.imagenUrl = imagenUrl;
+    data.imagenPublicId = imagenPublicId;
 
     const enlace = await prisma.enlaceRecurso.update({
       where: { id },
@@ -135,12 +173,31 @@ const actualizarEnlace = async (req, res) => {
       include: { creador: { select: { id: true, nombre: true, apellido: true } } },
     });
 
-    await log(req.user.id, 'UPDATE', enlace.id, `Catálogo actualizado: "${enlace.titulo}"`, req.ip);
+    await log(req.user.id, 'UPDATE', enlace.id, `Recurso actualizado: "${enlace.titulo}"`, req.ip);
 
-    res.json({ success: true, message: 'Catálogo actualizado exitosamente', data: enlace });
+    res.json({ success: true, message: 'Recurso actualizado exitosamente', data: enlace });
   } catch (error) {
-    console.error('[actualizarEnlace]', error);
-    res.status(500).json({ success: false, message: 'Error al actualizar catálogo', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al actualizar recurso', error: error.message });
+  }
+};
+
+const eliminarEnlace = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const recurso = await prisma.enlaceRecurso.findUnique({ where: { id } });
+
+    if (!recurso) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
+
+    if (recurso.imagenPublicId) {
+      await cloudinary.uploader.destroy(recurso.imagenPublicId);
+    }
+
+    await prisma.enlaceRecurso.delete({ where: { id } });
+    await log(req.user.id, 'DELETE', id, `Recurso eliminado: "${recurso.titulo}"`, req.ip);
+
+    res.json({ success: true, message: 'Recurso eliminado exitosamente' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al eliminar recurso', error: error.message });
   }
 };
 
@@ -148,7 +205,7 @@ const toggleActivoEnlace = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const ex = await prisma.enlaceRecurso.findUnique({ where: { id } });
-    if (!ex) return res.status(404).json({ success: false, message: 'Catálogo no encontrado' });
+    if (!ex) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
 
     const enlace = await prisma.enlaceRecurso.update({
       where: { id },
@@ -158,16 +215,15 @@ const toggleActivoEnlace = async (req, res) => {
 
     await log(
       req.user.id, 'TOGGLE_ACTIVO', enlace.id,
-      `Catálogo ${enlace.activo ? 'activado' : 'desactivado'}: "${enlace.titulo}"`, req.ip
+      `Recurso ${enlace.activo ? 'activado' : 'desactivado'}: "${enlace.titulo}"`, req.ip
     );
 
     res.json({
       success: true,
-      message: `Catálogo ${enlace.activo ? 'activado' : 'desactivado'} exitosamente`,
+      message: `Recurso ${enlace.activo ? 'activado' : 'desactivado'} exitosamente`,
       data: enlace,
     });
   } catch (error) {
-    console.error('[toggleActivoEnlace]', error);
     res.status(500).json({ success: false, message: 'Error al cambiar estado', error: error.message });
   }
 };
@@ -176,10 +232,11 @@ const solicitarAcceso = async (req, res) => {
   try {
     const enlaceId = parseInt(req.params.id);
     const uid = req.user.id;
+    const { urlRetorno } = req.body;
 
     const enlace = await prisma.enlaceRecurso.findUnique({ where: { id: enlaceId } });
-    if (!enlace) return res.status(404).json({ success: false, message: 'Catálogo no encontrado' });
-    if (!enlace.activo) return res.status(400).json({ success: false, message: 'Este catálogo no está disponible' });
+    if (!enlace) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
+    if (!enlace.activo) return res.status(400).json({ success: false, message: 'Este recurso no está disponible' });
 
     const costo = enlace.costo ? parseFloat(enlace.costo) : 0;
     const requierePago = costo > 0;
@@ -217,7 +274,7 @@ const solicitarAcceso = async (req, res) => {
       },
       include: {
         usuario: { select: { id: true, nombre: true, apellido: true, email: true } },
-        enlace: { select: { titulo: true } },
+        enlace: { select: { titulo: true, url: true } },
       },
     });
 
@@ -230,7 +287,7 @@ const solicitarAcceso = async (req, res) => {
           accesoId: acceso.id,
           referencia: ref,
           monto: costo,
-          tipoPago: 'spei',
+          tipoPago: 'mercadopago',
           estadoPago: 'pendiente',
         },
       });
@@ -273,7 +330,6 @@ const solicitarAcceso = async (req, res) => {
       esReanudacion: false,
     });
   } catch (error) {
-    console.error('[solicitarAcceso]', error);
     res.status(500).json({ success: false, message: 'Error al solicitar acceso', error: error.message });
   }
 };
@@ -289,7 +345,7 @@ const confirmarPorReferencia = async (req, res) => {
         acceso: {
           include: {
             usuario: { select: { id: true } },
-            enlace: { select: { titulo: true } },
+            enlace: { select: { titulo: true, url: true } },
           },
         },
       },
@@ -319,9 +375,8 @@ const confirmarPorReferencia = async (req, res) => {
       },
     });
 
-    res.json({ success: true, message: 'Acceso confirmado exitosamente', yaConfirmado: true });
+    res.json({ success: true, message: 'Acceso confirmado exitosamente', yaConfirmado: true, urlDrive: pago.acceso.enlace.url });
   } catch (error) {
-    console.error('[confirmarPorReferencia-enlaces]', error);
     res.status(500).json({ success: false, message: 'Error al confirmar acceso', error: error.message });
   }
 };
@@ -338,7 +393,6 @@ const obtenerAccesos = async (req, res) => {
     });
     res.json({ success: true, data: accesos });
   } catch (error) {
-    console.error('[obtenerAccesos]', error);
     res.status(500).json({ success: false, message: 'Error al obtener accesos', error: error.message });
   }
 };
@@ -368,7 +422,6 @@ const obtenerMiPago = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('[obtenerMiPago]', error);
     res.status(500).json({ success: false, message: 'Error al obtener pago', error: error.message });
   }
 };
@@ -378,6 +431,7 @@ module.exports = {
   obtenerEnlacePorId,
   crearEnlace,
   actualizarEnlace,
+  eliminarEnlace,
   toggleActivoEnlace,
   solicitarAcceso,
   confirmarPorReferencia,
