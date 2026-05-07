@@ -1,8 +1,8 @@
-const mercadopago = require('mercadopago');
+const { MercadoPagoConfig, Preference } = require('mercadopago');
 const { prisma } = require('../config/database');
 
-mercadopago.configure({
-  access_token: process.env.MERCADOPAGO_ACCESS_TOKEN,
+const client = new MercadoPagoConfig({ 
+  accessToken: process.env.MP_ACCESS_TOKEN
 });
 
 const crearPreferenciaRecurso = async (req, res) => {
@@ -17,7 +17,9 @@ const crearPreferenciaRecurso = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
     }
 
-    const preference = {
+    const preference = new Preference(client);
+
+    const body = {
       items: [
         {
           title: recurso.titulo,
@@ -39,9 +41,11 @@ const crearPreferenciaRecurso = async (req, res) => {
       },
     };
 
-    const response = await mercadopago.preferences.create(preference);
-    res.json({ success: true, init_point: response.body.init_point });
+    const response = await preference.create({ body });
+    
+    res.json({ success: true, init_point: response.init_point });
   } catch (error) {
+    console.error('[crearPreferenciaRecurso]', error);
     res.status(500).json({ success: false, message: 'Error al crear preferencia', error: error.message });
   }
 };
