@@ -1,12 +1,7 @@
 const { prisma } = require('../config/database');
 const cloudinary = require('cloudinary').v2;
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
+// Usamos la misma función de subida que en catálogos
 const uploadToCloudinary = async (fileBuffer, mimetype) => {
   const b64 = Buffer.from(fileBuffer).toString('base64');
   const dataURI = `data:${mimetype};base64,${b64}`;
@@ -14,6 +9,7 @@ const uploadToCloudinary = async (fileBuffer, mimetype) => {
   return result.secure_url;
 };
 
+// Extractor dinámico del public ID para borrar en Cloudinary
 const extractPublicId = (url) => {
   try {
     const parts = url.split('/');
@@ -89,6 +85,7 @@ const obtenerEnlaces = async (req, res) => {
 
     res.json({ success: true, data });
   } catch (error) {
+    console.error('[obtenerEnlaces]', error);
     res.status(500).json({ success: false, message: 'Error al obtener recursos', error: error.message });
   }
 };
@@ -102,6 +99,7 @@ const obtenerEnlacePorId = async (req, res) => {
     if (!enlace) return res.status(404).json({ success: false, message: 'Recurso no encontrado' });
     res.json({ success: true, data: enlace });
   } catch (error) {
+    console.error('[obtenerEnlacePorId]', error);
     res.status(500).json({ success: false, message: 'Error al obtener recurso', error: error.message });
   }
 };
@@ -143,6 +141,7 @@ const crearEnlace = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Recurso creado exitosamente', data: enlace });
   } catch (error) {
+    console.error('[crearEnlace]', error);
     res.status(500).json({ success: false, message: 'Error al crear recurso', error: error.message });
   }
 };
@@ -186,6 +185,7 @@ const actualizarEnlace = async (req, res) => {
 
     res.json({ success: true, message: 'Recurso actualizado exitosamente', data: enlace });
   } catch (error) {
+    console.error('[actualizarEnlace]', error);
     res.status(500).json({ success: false, message: 'Error al actualizar recurso', error: error.message });
   }
 };
@@ -207,6 +207,7 @@ const eliminarEnlace = async (req, res) => {
 
     res.json({ success: true, message: 'Recurso eliminado exitosamente' });
   } catch (error) {
+    console.error('[eliminarEnlace]', error);
     res.status(500).json({ success: false, message: 'Error al eliminar recurso', error: error.message });
   }
 };
@@ -234,6 +235,7 @@ const toggleActivoEnlace = async (req, res) => {
       data: enlace,
     });
   } catch (error) {
+    console.error('[toggleActivoEnlace]', error);
     res.status(500).json({ success: false, message: 'Error al cambiar estado', error: error.message });
   }
 };
@@ -339,6 +341,7 @@ const solicitarAcceso = async (req, res) => {
       esReanudacion: false,
     });
   } catch (error) {
+    console.error('[solicitarAcceso]', error);
     res.status(500).json({ success: false, message: 'Error al solicitar acceso', error: error.message });
   }
 };
@@ -386,6 +389,7 @@ const confirmarPorReferencia = async (req, res) => {
 
     res.json({ success: true, message: 'Acceso confirmado exitosamente', yaConfirmado: true, urlDrive: pago.acceso.enlace.url });
   } catch (error) {
+    console.error('[confirmarPorReferencia]', error);
     res.status(500).json({ success: false, message: 'Error al confirmar acceso', error: error.message });
   }
 };
@@ -402,6 +406,7 @@ const obtenerAccesos = async (req, res) => {
     });
     res.json({ success: true, data: accesos });
   } catch (error) {
+    console.error('[obtenerAccesos]', error);
     res.status(500).json({ success: false, message: 'Error al obtener accesos', error: error.message });
   }
 };
@@ -431,6 +436,7 @@ const obtenerMiPago = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('[obtenerMiPago]', error);
     res.status(500).json({ success: false, message: 'Error al obtener pago', error: error.message });
   }
 };
