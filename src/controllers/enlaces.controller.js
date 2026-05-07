@@ -252,56 +252,83 @@ const solicitarAcceso = async (req, res) => {
     const costo = enlace.costo ? parseFloat(enlace.costo) : 0;
     const requierePago = costo > 0;
 
-    const ex = await prisma.accesoRecurso.findFirst({
+    let acceso = await prisma.accesoRecurso.findFirst({
       where: { enlaceId, usuarioId: uid },
       include: { pago: true },
     });
 
-    if (ex) {
-      if (ex.estado === 'activo') {
+    // LÓGICA BLINDADA: Reutilizar acceso si ya existe para evitar error P2002
+    if (acceso) {
+      if (acceso.estado === 'activo') {
         return res.status(400).json({ success: false, message: 'Ya tienes acceso a este recurso' });
       }
 
-      if (ex.estado === 'pendiente' && ex.pago?.estadoPago === 'pendiente') {
+      // Si el acceso existe y está estrictamente pendiente de pago (reanudación normal)
+      if (acceso.estado === 'pendiente' && acceso.pago?.estadoPago === 'pendiente') {
         return res.json({
           success: true,
           message: 'Reanudando pago pendiente',
           requierePago: true,
           pagoInfo: {
-            referencia: ex.pago.referencia,
-            monto: ex.pago.monto,
+            referencia: acceso.pago.referencia,
+            monto: acceso.pago.monto,
             tituloRecurso: enlace.titulo,
           },
           esReanudacion: true,
         });
       }
-    }
 
-    const acceso = await prisma.accesoRecurso.create({
-      data: {
-        enlaceId,
-        usuarioId: uid,
-        estado: requierePago ? 'pendiente' : 'activo',
-      },
-      include: {
-        usuario: { select: { id: true, nombre: true, apellido: true, email: true } },
-        enlace: { select: { titulo: true, url: true } },
-      },
-    });
+      // Si el acceso existe, pero el pago fue rechazado, cancelado o no existe:
+      // Lo actualizamos a pendiente en vez de intentar crear otro registro.
+      acceso = await prisma.accesoRecurso.update({
+        where: { id: acceso.id },
+        data: { estado: requierePago ? 'pendiente' : 'activo' },
+        include: {
+          usuario: { select: { id: true, nombre: true, apellido: true, email: true } },
+          enlace: { select: { titulo: true, url: true } },
+        }
+      });
+    } else {
+      // Si el acceso NO existe, entonces sí lo creamos tranquilamente.
+      acceso = await prisma.accesoRecurso.create({
+        data: {
+          enlaceId,
+          usuarioId: uid,
+          estado: requierePago ? 'pendiente' : 'activo',
+        },
+        include: {
+          usuario: { select: { id: true, nombre: true, apellido: true, email: true } },
+          enlace: { select: { titulo: true, url: true } },
+        },
+      });
+    }
 
     let pagoInfo = null;
 
     if (requierePago) {
       const ref = genRef();
-      await prisma.pagoAccesoRecurso.create({
-        data: {
-          accesoId: acceso.id,
-          referencia: ref,
-          monto: costo,
-          tipoPago: 'mercadopago',
-          estadoPago: 'pendiente',
-        },
+      
+      // Upsert (Actualizar si existe, Crear si no existe) para el registro de Pago
+      const pagoExistente = await prisma.pagoAccesoRecurso.findUnique({
+         where: { accesoId: acceso.id }
       });
+
+      if (pagoExistente) {
+         await prisma.pagoAccesoRecurso.update({
+            where: { id: pagoExistente.id },
+            data: { referencia: ref, monto: costo, tipoPago: 'mercadopago', estadoPago: 'pendiente' }
+         });
+      } else {
+         await prisma.pagoAccesoRecurso.create({
+            data: {
+              accesoId: acceso.id,
+              referencia: ref,
+              monto: costo,
+              tipoPago: 'mercadopago',
+              estadoPago: 'pendiente',
+            },
+         });
+      }
 
       pagoInfo = { referencia: ref, monto: costo, tituloRecurso: enlace.titulo };
 
@@ -309,6 +336,7 @@ const solicitarAcceso = async (req, res) => {
         where: { rol: 'admin', activo: true },
         select: { id: true },
       });
+      
       if (admins.length > 0) {
         await prisma.notificacion.createMany({
           data: admins.map((a) => ({
