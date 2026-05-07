@@ -577,6 +577,7 @@ enum EstadoAcceso {
 enum TipoPago {
   spei
   efectivo
+  mercadopago
 }
 
 enum EstadoPago {
