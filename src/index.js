@@ -29,6 +29,7 @@ const campanasAdminRoutes = require('./routes/campanasAdmin.routes.js');
 const pagosController = require('./controllers/pagos.controller');
 const catalogosRoutes = require('./routes/catalogos.routes');
 const pagosCatalogosRoutes = require('./routes/pagosCatalogos.routes');
+const pagosRecursosRoutes = require('./routes/pagosRecursos.routes');
 
 const app = express();
 
@@ -79,6 +80,7 @@ app.use('/api/pagos',          pagosRoutes);
 app.use('/api/admin/campanas', campanasAdminRoutes)
 app.use('/api/catalogos', catalogosRoutes);
 app.use('/api/pagos-catalogos', pagosCatalogosRoutes);
+app.use('/api/pagos-recursos', pagosRecursosRoutes);
 
 app.use(errorHandler);
 
