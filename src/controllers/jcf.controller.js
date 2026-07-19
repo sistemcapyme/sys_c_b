@@ -187,7 +187,7 @@ const actualizarRecurso = async (req, res) => {
   }
 };
 
-export const obtenerAprendices = async (req, res) => {
+ const obtenerAprendices = async (req, res) => {
   try {
     const aprendices = await prisma.jovenJcf.findMany({
       include: {
@@ -207,7 +207,7 @@ export const obtenerAprendices = async (req, res) => {
 };
 
 // Actualizar el estado del Kanban (Drag & Drop)
-export const actualizarEstadoKanban = async (req, res) => {
+ const actualizarEstadoKanban = async (req, res) => {
   try {
     const { id } = req.params;
     const { estadoKanban } = req.body;
@@ -224,7 +224,7 @@ export const actualizarEstadoKanban = async (req, res) => {
 };
 
 // Asignar un colaborador/líder como encargado del aprendiz
-export const asignarEncargado = async (req, res) => {
+ const asignarEncargado = async (req, res) => {
   try {
     const { id } = req.params;
     const { encargadoId } = req.body;
