@@ -13,7 +13,7 @@ router.get(
   '/aprendices', 
   verifyToken, 
   checkRole(['admin', 'lider_jcf', 'encargado_jcf']), 
-  obtenerAprendices
+  jcfController.obtenerAprendices
 );
 
 // Endpoint para el Drop del Kanban
@@ -21,7 +21,7 @@ router.patch(
   '/aprendices/:id/estado', 
   verifyToken, 
   checkRole(['admin', 'lider_jcf', 'encargado_jcf']), 
-  actualizarEstadoKanban
+  jcfController.actualizarEstadoKanban
 );
 
 // Endpoint para asignar encargado desde el Modal (Restringido a Admin y Líder)
@@ -29,7 +29,7 @@ router.patch(
   '/aprendices/:id/encargado', 
   verifyToken, 
   checkRole(['admin', 'lider_jcf']), 
-  asignarEncargado
+  jcfController.asignarEncargado
 );
 
 module.exports = router;
