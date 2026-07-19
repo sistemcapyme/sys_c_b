@@ -187,11 +187,26 @@ const actualizarRecurso = async (req, res) => {
   }
 };
 
+const obtenerAprendices = async (req, res) => {
+  try {
+    const aprendices = await prisma.aprendiz.findMany({
+      include: {
+        negocio: true,
+        categoria: true
+      }
+    });
+    res.json(aprendices);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   obtenerJovenes,
   obtenerJovenPorId,
   crearJoven,
   actualizarJoven,
   toggleActivoJoven,
-  actualizarRecurso
+  actualizarRecurso,
+  obtenerAprendices
 };
