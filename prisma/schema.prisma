@@ -32,7 +32,8 @@ model Usuario {
   avisosLeidos               AvisoLeido[]
   accesosRecursos            AccesoRecurso[]
   pagosAccesoConfirmados     PagoAccesoRecurso[]        @relation("pagosAccesoConfirmados")
-  jovenesJcf                 JovenJcf[]
+  jovenesCliente    JovenJcf[] @relation("JovenCliente")
+  jovenesEncargados JovenJcf[] @relation("JovenEncargado")
   campanasCreadas            Campana[]                  @relation("CampanaCreador")
   inversiones                Inversion[]                @relation("InversionInversor")
   inversionesConfirmadas     Inversion[]                @relation("InversionConfirmador")
@@ -450,30 +451,42 @@ model PagoAccesoRecurso {
 }
 
 model JovenJcf {
-  id                Int          @id @default(autoincrement())
-  nombre            String       @db.VarChar(100)
-  apellido          String       @db.VarChar(100)
-  correo            String?      @db.VarChar(150)
-  telefono          String?      @db.VarChar(20)
-  curp              String?      @unique @db.VarChar(18)
-  negocioId         Int?         @map("negocio_id")
-  negocio           Negocio?     @relation(fields: [negocioId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  fechaInicio       DateTime?    @map("fecha_inicio") @db.Date
-  fechaTermino      DateTime?    @map("fecha_termino") @db.Date
-  urlRecurso        String?      @map("url_recurso") @db.VarChar(500)
-  activo            Boolean?     @default(true)
-  usuarioId         Int          @map("usuario_id")
-  postulacionId     Int?         @map("postulacion_id")
-  fechaRegistro     DateTime?    @default(now()) @map("fecha_registro") @db.Timestamp(0)
-  usuario           Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  postulacion       Postulacion? @relation(fields: [postulacionId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  estatus           String?      @default("Por registrar") @db.VarChar(50)
-  tarjetaEntregada  Boolean?     @default(false) @map("tarjeta_entregada")
-  horarios          String?      @db.VarChar(255)
-  horarioConfirmado Boolean?     @default(false) @map("horario_confirmado")
+  id                Int                   @id @default(autoincrement())
+  nombre            String                @db.VarChar(100)
+  apellido          String                @db.VarChar(100)
+  correo            String?               @db.VarChar(150)
+  telefono          String?               @db.VarChar(20)
+  curp              String?               @unique @db.VarChar(18)
+  
+  // Relaciones
+  negocioId         Int?                  @map("negocio_id")
+  usuarioId         Int                   @map("usuario_id") // El cliente dueño del registro
+  encargadoId       Int?                  @map("encargado_id") // NUEVO: El colaborador/lider asignado
+  postulacionId     Int?                  @map("postulacion_id")
+  
+  // Estados y Kanban
+  estadoKanban      EstadoPostulacionJcf? @default(PENDIENTE) @map("estado_kanban") // NUEVO
+  estatus           String?               @default("Por registrar") @db.VarChar(50) // Puedes mantenerlo si se usa para otra lógica, o reemplazarlo con estadoKanban
+  
+  // Fechas y otros
+  fechaInicio       DateTime?             @map("fecha_inicio") @db.Date
+  fechaTermino      DateTime?             @map("fecha_termino") @db.Date
+  urlRecurso        String?               @map("url_recurso") @db.VarChar(500)
+  tarjetaEntregada  Boolean?              @default(false) @map("tarjeta_entregada")
+  horarios          String?               @db.VarChar(255)
+  horarioConfirmado Boolean?              @default(false) @map("horario_confirmado")
+  activo            Boolean?              @default(true)
+  fechaRegistro     DateTime?             @default(now()) @map("fecha_registro") @db.Timestamp(0)
+  
+  // Definición de relaciones
+  negocio           Negocio?              @relation(fields: [negocioId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  usuario           Usuario               @relation("JovenCliente", fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  encargado         Usuario?              @relation("JovenEncargado", fields: [encargadoId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  postulacion       Postulacion?          @relation(fields: [postulacionId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([activo])
   @@index([usuarioId])
+  @@index([encargadoId])
   @@index([postulacionId])
   @@index([negocioId])
   @@map("jovenes_jcf")
@@ -590,6 +603,8 @@ enum Rol {
   admin
   colaborador
   cliente
+  lider_jcf
+  encargado_jcf
 }
 
 enum TipoRespuesta {
@@ -671,4 +686,10 @@ enum EstadoCampana {
 enum TipoCrowdfunding {
   donativo
   inversion
+}
+
+enum EstadoPostulacionJcf {
+  PENDIENTE
+  EN_PROCESO
+  POSTULADO
 }

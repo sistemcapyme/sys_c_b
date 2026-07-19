@@ -187,15 +187,54 @@ const actualizarRecurso = async (req, res) => {
   }
 };
 
-const obtenerAprendices = async (req, res) => {
+export const obtenerAprendices = async (req, res) => {
   try {
-    const aprendices = await prisma.aprendiz.findMany({
+    const aprendices = await prisma.jovenJcf.findMany({
       include: {
         negocio: true,
-        categoria: true
+        encargado: {
+          select: { id: true, nombre: true, apellido: true }
+        },
+        usuario: {
+          select: { id: true, nombre: true, email: true }
+        }
       }
     });
-    res.json(aprendices);
+    res.status(200).json(aprendices);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Actualizar el estado del Kanban (Drag & Drop)
+export const actualizarEstadoKanban = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estadoKanban } = req.body;
+
+    const aprendizActualizado = await prisma.jovenJcf.update({
+      where: { id: Number(id) },
+      data: { estadoKanban }
+    });
+    
+    res.status(200).json(aprendizActualizado);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Asignar un colaborador/líder como encargado del aprendiz
+export const asignarEncargado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { encargadoId } = req.body;
+
+    const aprendizActualizado = await prisma.jovenJcf.update({
+      where: { id: Number(id) },
+      data: { encargadoId: encargadoId ? Number(encargadoId) : null }
+    });
+
+    res.status(200).json(aprendizActualizado);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -208,5 +247,7 @@ module.exports = {
   actualizarJoven,
   toggleActivoJoven,
   actualizarRecurso,
-  obtenerAprendices
+  obtenerAprendices,
+  actualizarEstadoKanban,
+  asignarEncargado
 };
