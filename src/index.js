@@ -25,11 +25,11 @@ const jcfRoutes            = require('./routes/jcf.routes');
 const campanasRoutes       = require('./routes/campanas.routes');
 const inversionesRoutes    = require('./routes/inversiones.routes');
 const pagosRoutes          = require('./routes/pagos.routes');
-const campanasAdminRoutes = require('./routes/campanasAdmin.routes.js'); 
-const pagosController = require('./controllers/pagos.controller');
-const catalogosRoutes = require('./routes/catalogos.routes');
+const campanasAdminRoutes  = require('./routes/campanasAdmin.routes'); 
+const pagosController      = require('./controllers/pagos.controller');
+const catalogosRoutes      = require('./routes/catalogos.routes');
 const pagosCatalogosRoutes = require('./routes/pagosCatalogos.routes');
-const pagosRecursosRoutes = require('./routes/pagosRecursos.routes');
+const pagosRecursosRoutes  = require('./routes/pagosRecursos.routes');
 
 const app = express();
 
@@ -77,10 +77,10 @@ app.use('/api/jcf',            jcfRoutes);
 app.use('/api/campanas',       campanasRoutes);
 app.use('/api/inversiones',    inversionesRoutes);
 app.use('/api/pagos',          pagosRoutes);
-app.use('/api/admin/campanas', campanasAdminRoutes)
-app.use('/api/catalogos', catalogosRoutes);
+app.use('/api/admin/campanas', campanasAdminRoutes);
+app.use('/api/catalogos',      catalogosRoutes);
 app.use('/api/pagos-catalogos', pagosCatalogosRoutes);
-app.use('/api/pagos-recursos', pagosRecursosRoutes);
+app.use('/api/pagos-recursos',  pagosRecursosRoutes);
 
 app.use(errorHandler);
 

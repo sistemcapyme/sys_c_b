@@ -29,6 +29,7 @@ const obtenerJovenes = async (req, res) => {
     if (activo !== undefined) where.activo = activo === 'true';
     if (postulacionId) where.postulacionId = parseInt(postulacionId);
     if (estatus) where.estatus = estatus;
+    
     if (buscar) {
       where.OR = [
         { nombre: { contains: buscar } },
@@ -37,12 +38,14 @@ const obtenerJovenes = async (req, res) => {
         { correo: { contains: buscar } },
       ];
     }
+    
     if (estadoGeo || municipioNegocio) {
       where.negocio = {};
       if (estadoGeo) where.negocio.estado = { contains: estadoGeo };
       if (municipioNegocio) where.negocio.ciudad = { contains: municipioNegocio };
     }
-    if (req.user.rol === 'cliente') {
+    
+    if (req.user?.rol === 'cliente') {
       where.usuarioId = req.user.id;
     }
 
@@ -58,16 +61,42 @@ const obtenerJovenes = async (req, res) => {
   }
 };
 
+const obtenerAprendices = async (req, res) => {
+  try {
+    const aprendices = await prisma.jovenJcf.findMany({
+      include: {
+        negocio: true,
+        encargado: {
+          select: { id: true, nombre: true, apellido: true }
+        },
+        usuario: {
+          select: { id: true, nombre: true, email: true }
+        }
+      }
+    });
+    res.status(200).json(aprendices);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const obtenerJovenPorId = async (req, res) => {
   try {
+    if (req.params.id === 'aprendices') {
+      return obtenerAprendices(req, res);
+    }
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+
     const joven = await prisma.jovenJcf.findUnique({
-      where: { id: parseInt(req.params.id) },
+      where: { id },
       include: includeBase
     });
 
     if (!joven) return res.status(404).json({ success: false, message: 'Joven no encontrado' });
 
-    if (req.user.rol === 'cliente' && joven.usuarioId !== req.user.id) {
+    if (req.user?.rol === 'cliente' && joven.usuarioId !== req.user?.id) {
       return res.status(403).json({ success: false, message: 'No tienes permiso para ver este registro' });
     }
 
@@ -81,9 +110,9 @@ const crearJoven = async (req, res) => {
   try {
     const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, ...data } = req.body;
 
-    const usuarioId = (['admin', 'colaborador'].includes(req.user.rol)) && usuarioIdBody
+    const usuarioId = (['admin', 'colaborador'].includes(req.user?.rol)) && usuarioIdBody
       ? parseInt(usuarioIdBody)
-      : req.user.id;
+      : req.user?.id;
 
     const fechaInicio = data.fechaInicio ? new Date(data.fechaInicio).toISOString() : null;
     const fechaTermino = data.fechaTermino ? new Date(data.fechaTermino).toISOString() : null;
@@ -115,6 +144,8 @@ const crearJoven = async (req, res) => {
 const actualizarJoven = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Joven no encontrado' });
 
@@ -150,6 +181,8 @@ const actualizarJoven = async (req, res) => {
 const toggleActivoJoven = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Joven no encontrado' });
 
@@ -170,6 +203,8 @@ const toggleActivoJoven = async (req, res) => {
 const actualizarRecurso = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+
     const { urlRecurso } = req.body;
 
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
@@ -187,33 +222,15 @@ const actualizarRecurso = async (req, res) => {
   }
 };
 
- const obtenerAprendices = async (req, res) => {
+const actualizarEstadoKanban = async (req, res) => {
   try {
-    const aprendices = await prisma.jovenJcf.findMany({
-      include: {
-        negocio: true,
-        encargado: {
-          select: { id: true, nombre: true, apellido: true }
-        },
-        usuario: {
-          select: { id: true, nombre: true, email: true }
-        }
-      }
-    });
-    res.status(200).json(aprendices);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
 
-// Actualizar el estado del Kanban (Drag & Drop)
- const actualizarEstadoKanban = async (req, res) => {
-  try {
-    const { id } = req.params;
     const { estadoKanban } = req.body;
 
     const aprendizActualizado = await prisma.jovenJcf.update({
-      where: { id: Number(id) },
+      where: { id },
       data: { estadoKanban }
     });
     
@@ -223,15 +240,16 @@ const actualizarRecurso = async (req, res) => {
   }
 };
 
-// Asignar un colaborador/líder como encargado del aprendiz
- const asignarEncargado = async (req, res) => {
+const asignarEncargado = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+
     const { encargadoId } = req.body;
 
     const aprendizActualizado = await prisma.jovenJcf.update({
-      where: { id: Number(id) },
-      data: { encargadoId: encargadoId ? Number(encargadoId) : null }
+      where: { id },
+      data: { encargadoId: encargadoId ? parseInt(encargadoId) : null }
     });
 
     res.status(200).json(aprendizActualizado);
