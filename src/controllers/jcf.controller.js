@@ -82,10 +82,6 @@ const obtenerAprendices = async (req, res) => {
 
 const obtenerJovenPorId = async (req, res) => {
   try {
-    if (req.params.id === 'aprendices') {
-      return obtenerAprendices(req, res);
-    }
-
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
 
