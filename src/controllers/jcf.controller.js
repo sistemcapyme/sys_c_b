@@ -2,23 +2,8 @@ const { prisma } = require('../config/database');
 
 const includeBase = {
   usuario: { select: { id: true, nombre: true, apellido: true, email: true } },
-  negocio: {
-    select: {
-      id: true,
-      nombreNegocio: true,
-      usuarioId: true,
-      ciudad: true,   
-      estado: true,   
-      usuario: { select: { id: true, nombre: true, apellido: true, email: true } }
-    }
-  },
-  postulacion: {
-    select: {
-      id: true,
-      negocio: { select: { id: true, nombreNegocio: true } },
-      programa: { select: { id: true, nombre: true } },
-    }
-  }
+  negocio: true,
+  postulacion: true
 };
 
 const obtenerJovenes = async (req, res) => {
@@ -57,6 +42,7 @@ const obtenerJovenes = async (req, res) => {
 
     res.json({ success: true, data: jovenes });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al obtener jóvenes JCF', error: error.message });
   }
 };
@@ -66,9 +52,6 @@ const obtenerAprendices = async (req, res) => {
     const aprendices = await prisma.jovenJcf.findMany({
       include: {
         negocio: true,
-        encargado: {
-          select: { id: true, nombre: true, apellido: true }
-        },
         usuario: {
           select: { id: true, nombre: true, email: true }
         }
@@ -76,6 +59,7 @@ const obtenerAprendices = async (req, res) => {
     });
     res.status(200).json(aprendices);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -98,6 +82,7 @@ const obtenerJovenPorId = async (req, res) => {
 
     res.json({ success: true, data: joven });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al obtener joven', error: error.message });
   }
 };
@@ -133,6 +118,7 @@ const crearJoven = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Joven creado exitosamente', data: joven });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al crear joven', error: error.message });
   }
 };
@@ -170,6 +156,7 @@ const actualizarJoven = async (req, res) => {
 
     res.json({ success: true, message: 'Joven actualizado exitosamente', data: joven });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al actualizar joven', error: error.message });
   }
 };
@@ -192,6 +179,7 @@ const toggleActivoJoven = async (req, res) => {
 
     res.json({ success: true, message: `Joven ${accionTexto} exitosamente`, data: joven });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al cambiar estado', error: error.message });
   }
 };
@@ -214,6 +202,7 @@ const actualizarRecurso = async (req, res) => {
 
     res.json({ success: true, message: 'Recurso actualizado exitosamente', data: joven });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error al actualizar recurso', error: error.message });
   }
 };
@@ -232,6 +221,7 @@ const actualizarEstadoKanban = async (req, res) => {
     
     res.status(200).json(aprendizActualizado);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -250,6 +240,7 @@ const asignarEncargado = async (req, res) => {
 
     res.status(200).json(aprendizActualizado);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };

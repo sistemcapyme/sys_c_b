@@ -1,4 +1,4 @@
-const ROLES_VALIDOS = ['admin', 'colaborador', 'cliente'];
+const ROLES_VALIDOS = ['admin', 'colaborador', 'cliente', 'lider_jcf', 'encargado_jcf', 'usuario'];
 
 const validateCrearUsuario = (req, res, next) => {
   const { nombre, apellido, email, password, rol } = req.body;
