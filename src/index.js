@@ -81,6 +81,7 @@ app.use('/api/admin/campanas', campanasAdminRoutes);
 app.use('/api/catalogos',      catalogosRoutes);
 app.use('/api/pagos-catalogos', pagosCatalogosRoutes);
 app.use('/api/pagos-recursos',  pagosRecursosRoutes);
+app.use('/contacto', contactoRoutes);
 
 app.use(errorHandler);
 
