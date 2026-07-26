@@ -9,7 +9,6 @@ const includeBase = {
 const obtenerJovenes = async (req, res) => {
   try {
     const { activo, buscar, postulacionId, estadoGeo, municipioNegocio, estatus } = req.query;
-
     const where = {};
     if (activo !== undefined) where.activo = activo === 'true';
     if (postulacionId) where.postulacionId = parseInt(postulacionId);
@@ -42,14 +41,19 @@ const obtenerJovenes = async (req, res) => {
 
     res.json({ success: true, data: jovenes });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: 'Error al obtener jóvenes JCF', error: error.message });
   }
 };
 
 const obtenerAprendices = async (req, res) => {
   try {
+    const where = {};
+    if (req.user.rol === 'encargado_jcf') {
+      where.encargado_id = req.user.id;
+    }
+
     const aprendices = await prisma.jovenJcf.findMany({
+      where,
       include: {
         negocio: true,
         usuario: {
@@ -59,7 +63,6 @@ const obtenerAprendices = async (req, res) => {
     });
     res.status(200).json(aprendices);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -82,7 +85,6 @@ const obtenerJovenPorId = async (req, res) => {
 
     res.json({ success: true, data: joven });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: 'Error al obtener joven', error: error.message });
   }
 };
@@ -118,7 +120,6 @@ const crearJoven = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Joven creado exitosamente', data: joven });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: 'Error al crear joven', error: error.message });
   }
 };
@@ -156,7 +157,6 @@ const actualizarJoven = async (req, res) => {
 
     res.json({ success: true, message: 'Joven actualizado exitosamente', data: joven });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: 'Error al actualizar joven', error: error.message });
   }
 };
@@ -179,7 +179,6 @@ const toggleActivoJoven = async (req, res) => {
 
     res.json({ success: true, message: `Joven ${accionTexto} exitosamente`, data: joven });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: 'Error al cambiar estado', error: error.message });
   }
 };
@@ -202,7 +201,6 @@ const actualizarRecurso = async (req, res) => {
 
     res.json({ success: true, message: 'Recurso actualizado exitosamente', data: joven });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, message: 'Error al actualizar recurso', error: error.message });
   }
 };
@@ -216,12 +214,11 @@ const actualizarEstadoKanban = async (req, res) => {
 
     const aprendizActualizado = await prisma.jovenJcf.update({
       where: { id },
-      data: { estadoKanban }
+      data: { estado_kanban: estadoKanban }
     });
     
     res.status(200).json(aprendizActualizado);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -235,13 +232,44 @@ const asignarEncargado = async (req, res) => {
 
     const aprendizActualizado = await prisma.jovenJcf.update({
       where: { id },
-      data: { encargadoId: encargadoId ? parseInt(encargadoId) : null }
+      data: { encargado_id: encargadoId ? parseInt(encargadoId) : null }
     });
 
     res.status(200).json(aprendizActualizado);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+const obtenerLideres = async (req, res) => {
+  try {
+    const lideres = await prisma.usuarios.findMany({
+      where: { rol: 'lider_jcf' },
+      select: { id: true, nombre: true, apellido: true, email: true, activo: true }
+    });
+    res.json({ success: true, data: lideres });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const crearNegocio = async (req, res) => {
+  try {
+    const { usuario_id, nombre_negocio, categoria_id, rfc, direccion, ciudad, estado } = req.body;
+    const negocio = await prisma.negocios.create({
+      data: {
+        usuario_id: parseInt(usuario_id),
+        nombre_negocio,
+        categoria_id: parseInt(categoria_id),
+        rfc,
+        direccion,
+        ciudad,
+        estado
+      }
+    });
+    res.status(201).json({ success: true, data: negocio });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -254,5 +282,7 @@ module.exports = {
   actualizarRecurso,
   obtenerAprendices,
   actualizarEstadoKanban,
-  asignarEncargado
+  asignarEncargado,
+  obtenerLideres,
+  crearNegocio
 };
