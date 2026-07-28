@@ -233,7 +233,7 @@ const asignarEncargado = async (req, res) => {
 const obtenerLideres = async (req, res) => {
   try {
     const lideres = await prisma.usuario.findMany({
-      where: { rol: 'lider_jcf' },
+      where: { rol: 'LIDER_JCF' },
       select: { id: true, nombre: true, apellido: true, email: true, activo: true }
     });
     res.json({ success: true, data: lideres });
@@ -255,7 +255,7 @@ const crearLider = async (req, res) => {
         apellido,
         email,
         password: hashedPassword,
-        rol: 'lider_jcf',
+        rol: 'LIDER_JCF',
         activo: activo !== undefined ? activo : true
       }
     });
