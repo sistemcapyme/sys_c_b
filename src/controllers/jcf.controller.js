@@ -231,32 +231,42 @@ const asignarEncargado = async (req, res) => {
 
 const obtenerLideres = async (req, res) => {
   try {
-    const lideres = await prisma.usuario.findMany({
+    // Usando 'usuarios' asumiendo que tu schema.prisma lo define en plural
+    const lideres = await prisma.usuarios.findMany({
       where: { rol: 'lider_jcf' },
       select: { id: true, nombre: true, apellido: true, email: true, activo: true }
     });
     res.json({ success: true, data: lideres });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    // Esto se registrará en los logs de tu servidor
+    console.error('💥 Error crítico en obtenerLideres:', error); 
+    res.status(500).json({ success: false, message: 'Error interno al obtener líderes', error: error.message });
   }
 };
 
 const crearLider = async (req, res) => {
   try {
-    const { nombre, apellido, email, password } = req.body;
-    const nuevoLider = await prisma.usuario.create({
+    const { nombre, apellido, email, password, activo } = req.body;
+    
+    // Hasheo de seguridad para la base de datos
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const nuevoLider = await prisma.usuarios.create({
       data: {
         nombre,
         apellido,
         email,
-        password, 
+        password: hashedPassword,
         rol: 'lider_jcf',
-        activo: true
+        activo: activo !== undefined ? activo : true
       }
     });
+    
     res.status(201).json({ success: true, data: nuevoLider });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('💥 Error crítico en crearLider:', error); 
+    res.status(500).json({ success: false, message: 'Error interno al crear líder', error: error.message });
   }
 };
 
