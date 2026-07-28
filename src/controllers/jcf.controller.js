@@ -1,5 +1,5 @@
 const { prisma } = require('../config/database');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 const includeBase = {
   usuario: { select: { id: true, nombre: true, apellido: true, email: true } },
@@ -238,8 +238,7 @@ const obtenerLideres = async (req, res) => {
     });
     res.json({ success: true, data: lideres });
   } catch (error) {
-    console.error('Error en obtenerLideres:', error);
-    res.status(500).json({ success: false, message: 'Error al obtener líderes', error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -263,8 +262,7 @@ const crearLider = async (req, res) => {
 
     res.status(201).json({ success: true, data: nuevoLider });
   } catch (error) {
-    console.error('Error en crearLider:', error);
-    res.status(500).json({ success: false, message: 'Error al crear líder', error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
