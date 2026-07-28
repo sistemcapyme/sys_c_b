@@ -49,8 +49,8 @@ const obtenerJovenes = async (req, res) => {
 const obtenerAprendices = async (req, res) => {
   try {
     const where = {};
-    if (req.user.rol === 'encargado_jcf') {
-      where.encargado_id = req.user.id;
+    if (req.user.rol === 'encargado_jcf' || req.user.rol === 'ENCARGADO_JCF') {
+      where.encargadoId = req.user.id;
     }
 
     const aprendices = await prisma.jovenJcf.findMany({
@@ -94,7 +94,7 @@ const crearJoven = async (req, res) => {
   try {
     const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, fechaInicio, fechaTermino, ...data } = req.body;
 
-    const usuarioId = (['admin', 'colaborador'].includes(req.user?.rol)) && usuarioIdBody
+    const usuarioId = (['admin', 'colaborador', 'ADMIN', 'COLABORADOR'].includes(req.user?.rol)) && usuarioIdBody
       ? parseInt(usuarioIdBody)
       : req.user?.id;
 
