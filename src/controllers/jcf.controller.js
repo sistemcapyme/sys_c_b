@@ -1,5 +1,5 @@
 const { prisma } = require('../config/database');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const includeBase = {
   usuario: { select: { id: true, nombre: true, apellido: true, email: true } },
@@ -42,7 +42,7 @@ const obtenerJovenes = async (req, res) => {
 
     res.json({ success: true, data: jovenes });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al obtener jóvenes JCF', error: error.message });
+    res.status(500).json({ success: false, message: 'Error al obtener jóvenes JCF', detalle: error.message });
   }
 };
 
@@ -64,7 +64,7 @@ const obtenerAprendices = async (req, res) => {
     });
     res.status(200).json(aprendices);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
@@ -86,7 +86,7 @@ const obtenerJovenPorId = async (req, res) => {
 
     res.json({ success: true, data: joven });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al obtener joven', error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
@@ -115,7 +115,7 @@ const crearJoven = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Joven creado exitosamente', data: joven });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al crear joven', error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
@@ -146,7 +146,7 @@ const actualizarJoven = async (req, res) => {
 
     res.json({ success: true, message: 'Joven actualizado exitosamente', data: joven });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al actualizar joven', error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
@@ -168,7 +168,7 @@ const toggleActivoJoven = async (req, res) => {
 
     res.json({ success: true, message: `Joven ${accionTexto} exitosamente`, data: joven });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al cambiar estado', error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
@@ -190,7 +190,7 @@ const actualizarRecurso = async (req, res) => {
 
     res.json({ success: true, message: 'Recurso actualizado exitosamente', data: joven });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error al actualizar recurso', error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
@@ -203,12 +203,12 @@ const actualizarEstadoKanban = async (req, res) => {
 
     const aprendizActualizado = await prisma.jovenJcf.update({
       where: { id },
-      data: { estado_kanban: estadoKanban }
+      data: { estadoKanban: estadoKanban }
     });
     
     res.status(200).json(aprendizActualizado);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
@@ -221,12 +221,12 @@ const asignarEncargado = async (req, res) => {
 
     const aprendizActualizado = await prisma.jovenJcf.update({
       where: { id },
-      data: { encargado_id: encargadoId ? parseInt(encargadoId) : null }
+      data: { encargadoId: encargadoId ? parseInt(encargadoId) : null }
     });
 
     res.status(200).json(aprendizActualizado);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
@@ -238,7 +238,7 @@ const obtenerLideres = async (req, res) => {
     });
     res.json({ success: true, data: lideres });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno al obtener líderes', detalle: error.message });
   }
 };
 
@@ -262,7 +262,7 @@ const crearLider = async (req, res) => {
 
     res.status(201).json({ success: true, data: nuevoLider });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno al crear líder', detalle: error.message });
   }
 };
 
@@ -271,9 +271,9 @@ const crearNegocio = async (req, res) => {
     const { usuario_id, nombre_negocio, categoria_id, rfc, direccion, ciudad, estado } = req.body;
     const negocio = await prisma.negocio.create({
       data: {
-        usuario_id: parseInt(usuario_id),
-        nombre_negocio,
-        categoria_id: parseInt(categoria_id),
+        usuarioId: parseInt(usuario_id),
+        nombreNegocio: nombre_negocio,
+        categoriaId: parseInt(categoria_id),
         rfc,
         direccion,
         ciudad,
@@ -282,7 +282,7 @@ const crearNegocio = async (req, res) => {
     });
     res.status(201).json({ success: true, data: negocio });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
 
