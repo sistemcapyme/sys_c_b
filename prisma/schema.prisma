@@ -4,42 +4,41 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Usuario {
-  id                         Int                        @id @default(autoincrement())
-  nombre                     String                     @db.VarChar(100)
-  apellido                   String                     @db.VarChar(100)
-  email                      String                     @unique @db.VarChar(150)
-  password                   String                     @db.VarChar(255)
-  telefono                   String?                    @db.VarChar(20)
-  rol                        Rol
-  activo                     Boolean?                   @default(true)
-  fechaRegistro              DateTime?                  @default(now()) @map("fecha_registro") @db.Timestamp(0)
-  ultimaSesion               DateTime?                  @map("ultima_sesion") @db.Timestamp(0)
-  
-  // Relaciones
-  avisosCreados              Aviso[]                    @relation("AvisoCreador")
-  avisosActualizados         Aviso[]                    @relation("AvisoActualizadoPor")
-  cursosCreados              Curso[]
-  enlacesCreados             EnlaceRecurso[]
-  inscripcionesCurso         InscripcionCurso[]
-  negocios                   Negocio[]
-  pagosConfirmados           PagoInscripcion[]          @relation("pagosConfirmados")
-  postulaciones              Postulacion[]
-  preguntasCreadas           PreguntaFormulario[]
-  programasCreados           Programa[]
-  notificaciones             Notificacion[]
-  avisosLeidos               AvisoLeido[]
-  accesosRecursos            AccesoRecurso[]
-  pagosAccesoConfirmados     PagoAccesoRecurso[]        @relation("pagosAccesoConfirmados")
-  jovenesCliente             JovenJcf[]                 @relation("JovenCliente")
-  jovenesEncargados          JovenJcf[]                 @relation("JovenEncargado")
-  campanasCreadas            Campana[]                  @relation("CampanaCreador")
-  inversiones                Inversion[]                @relation("InversionInversor")
-  inversionesConfirmadas     Inversion[]                @relation("InversionConfirmador")
-  actualizacionesCampana     ActualizacionCampana[]     @relation("ActualizacionAutor")
-  notasPostulacion           NotaPostulacion[]
+  id                     Int                    @id @default(autoincrement())
+  nombre                 String                 @db.VarChar(100)
+  apellido               String                 @db.VarChar(100)
+  email                  String                 @unique @db.VarChar(150)
+  password               String                 @db.VarChar(255)
+  telefono               String?                @db.VarChar(20)
+  rol                    Rol
+  activo                 Boolean?               @default(true)
+  fechaRegistro          DateTime?              @default(now()) @map("fecha_registro") @db.Timestamp(0)
+  ultimaSesion           DateTime?              @map("ultima_sesion") @db.Timestamp(0)
+  accesosRecursos        AccesoRecurso[]
+  actualizacionesCampana ActualizacionCampana[] @relation("ActualizacionAutor")
+  avisosActualizados     Aviso[]                @relation("AvisoActualizadoPor")
+  avisosCreados          Aviso[]                @relation("AvisoCreador")
+  avisosLeidos           AvisoLeido[]
+  campanasCreadas        Campana[]              @relation("CampanaCreador")
+  cursosCreados          Curso[]
+  enlacesCreados         EnlaceRecurso[]
+  inscripcionesCurso     InscripcionCurso[]
+  inversionesConfirmadas Inversion[]            @relation("InversionConfirmador")
+  inversiones            Inversion[]            @relation("InversionInversor")
+  jovenesEncargados      JovenJcf[]             @relation("JovenEncargado")
+  jovenesCliente         JovenJcf[]             @relation("JovenCliente")
+  negocios               Negocio[]
+  notasPostulacion       NotaPostulacion[]
+  notificaciones         Notificacion[]
+  pagosAccesoConfirmados PagoAccesoRecurso[]    @relation("pagosAccesoConfirmados")
+  pagosConfirmados       PagoInscripcion[]      @relation("pagosConfirmados")
+  postulaciones          Postulacion[]
+  preguntasCreadas       PreguntaFormulario[]
+  programasCreados       Programa[]
 
   @@index([activo])
   @@index([email])
@@ -50,10 +49,9 @@ model Usuario {
 model CategoriaNegocio {
   id            Int        @id @default(autoincrement())
   nombre        String     @unique @db.VarChar(100)
-  descripcion   String?    @db.Text
+  descripcion   String?
   activo        Boolean?   @default(true)
   fechaCreacion DateTime?  @default(now()) @map("fecha_creacion") @db.Timestamp(0)
-  
   negocios      Negocio[]
   programas     Programa[]
 
@@ -62,33 +60,32 @@ model CategoriaNegocio {
 }
 
 model Negocio {
-  id                         Int                        @id @default(autoincrement())
-  usuarioId                  Int                        @map("usuario_id")
-  nombreNegocio              String                     @map("nombre_negocio") @db.VarChar(200)
-  categoriaId                Int                        @map("categoria_id")
-  rfc                        String?                    @db.VarChar(13)
-  razonSocial                String?                    @map("razon_social") @db.VarChar(200)
-  giroComercial              String?                    @map("giro_comercial") @db.VarChar(150)
-  direccion                  String?                    @db.Text
-  ciudad                     String?                    @db.VarChar(100)
-  estado                     String?                    @db.VarChar(100)
-  codigoPostal               String?                    @map("codigo_postal") @db.VarChar(10)
-  telefonoNegocio            String?                    @map("telefono_negocio") @db.VarChar(20)
-  emailNegocio               String?                    @map("email_negocio") @db.VarChar(150)
-  numeroEmpleados            Int?                       @default(0) @map("numero_empleados")
-  anioFundacion              Int?                       @map("anio_fundacion") @db.SmallInt
-  descripcion                String?                    @db.Text
-  activo                     Boolean?                   @default(true)
-  fechaRegistro              DateTime?                  @default(now()) @map("fecha_registro") @db.Timestamp(0)
-  fechaActualizacion         DateTime?                  @default(now()) @updatedAt @map("fecha_actualizacion") @db.Timestamp(0)
-  folio                      String?                    @db.VarChar(100)
-  
-  inscripcionesCurso         InscripcionCurso[]
-  usuario                    Usuario                    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  categoria                  CategoriaNegocio           @relation(fields: [categoriaId], references: [id], onDelete: NoAction)
-  postulaciones              Postulacion[]
-  jovenesJcf                 JovenJcf[]
-  campanas                   Campana[]
+  id                 Int                @id @default(autoincrement())
+  usuarioId          Int                @map("usuario_id")
+  nombreNegocio      String             @map("nombre_negocio") @db.VarChar(200)
+  categoriaId        Int                @map("categoria_id")
+  rfc                String?            @db.VarChar(13)
+  razonSocial        String?            @map("razon_social") @db.VarChar(200)
+  giroComercial      String?            @map("giro_comercial") @db.VarChar(150)
+  direccion          String?
+  ciudad             String?            @db.VarChar(100)
+  estado             String?            @db.VarChar(100)
+  codigoPostal       String?            @map("codigo_postal") @db.VarChar(10)
+  telefonoNegocio    String?            @map("telefono_negocio") @db.VarChar(20)
+  emailNegocio       String?            @map("email_negocio") @db.VarChar(150)
+  numeroEmpleados    Int?               @default(0) @map("numero_empleados")
+  anioFundacion      Int?               @map("anio_fundacion") @db.SmallInt
+  descripcion        String?
+  activo             Boolean?           @default(true)
+  fechaRegistro      DateTime?          @default(now()) @map("fecha_registro") @db.Timestamp(0)
+  fechaActualizacion DateTime?          @default(now()) @updatedAt @map("fecha_actualizacion") @db.Timestamp(0)
+  folio              String?            @db.VarChar(100)
+  campanas           Campana[]
+  inscripcionesCurso InscripcionCurso[]
+  jovenesJcf         JovenJcf[]
+  categoria          CategoriaNegocio   @relation(fields: [categoriaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario            Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  postulaciones      Postulacion[]
 
   @@index([activo])
   @@index([categoriaId])
@@ -101,11 +98,11 @@ model Negocio {
 model Programa {
   id                 Int                @id @default(autoincrement())
   nombre             String             @db.VarChar(200)
-  descripcion        String?            @db.Text
+  descripcion        String?
   tipoPrograma       String?            @map("tipo_programa") @db.VarChar(100)
   categoriaNegocioId Int?               @map("categoria_negocio_id")
-  requisitos         String?            @db.Text
-  beneficios         String?            @db.Text
+  requisitos         String?
+  beneficios         String?
   fechaInicio        DateTime?          @map("fecha_inicio") @db.Date
   fechaCierre        DateTime?          @map("fecha_cierre") @db.Date
   montoApoyo         Decimal?           @map("monto_apoyo") @db.Decimal(12, 2)
@@ -115,10 +112,9 @@ model Programa {
   fechaActualizacion DateTime?          @default(now()) @updatedAt @map("fecha_actualizacion") @db.Timestamp(0)
   estado             String?            @db.VarChar(100)
   municipio          String?            @db.VarChar(150)
-  
   postulaciones      Postulacion[]
-  categoria          CategoriaNegocio?  @relation(fields: [categoriaNegocioId], references: [id], onDelete: NoAction)
-  creador            Usuario            @relation(fields: [creadoPor], references: [id], onDelete: NoAction)
+  categoria          CategoriaNegocio?  @relation(fields: [categoriaNegocioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  creador            Usuario            @relation(fields: [creadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
   programasPreguntas ProgramaPregunta[]
 
   @@index([creadoPor])
@@ -131,7 +127,7 @@ model Programa {
 
 model PreguntaFormulario {
   id                 Int                    @id @default(autoincrement())
-  pregunta           String                 @db.Text
+  pregunta           String
   tipoRespuesta      TipoRespuesta          @map("tipo_respuesta")
   opcionesRespuesta  Json?                  @map("opciones_respuesta")
   obligatoria        Boolean?               @default(false)
@@ -141,8 +137,7 @@ model PreguntaFormulario {
   activa             Boolean?               @default(true)
   creadoPor          Int                    @map("creado_por")
   fechaCreacion      DateTime?              @default(now()) @map("fecha_creacion") @db.Timestamp(0)
-  
-  creador            Usuario                @relation(fields: [creadoPor], references: [id], onDelete: NoAction)
+  creador            Usuario                @relation(fields: [creadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
   programasPreguntas ProgramaPregunta[]
   respuestas         RespuestaPostulacion[]
 
@@ -160,9 +155,8 @@ model ProgramaPregunta {
   orden           Int?               @default(0)
   activa          Boolean?           @default(true)
   fechaAsignacion DateTime?          @default(now()) @map("fecha_asignacion") @db.Timestamp(0)
-  
-  programa        Programa           @relation(fields: [programaId], references: [id], onDelete: Cascade)
-  pregunta        PreguntaFormulario @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
+  pregunta        PreguntaFormulario @relation(fields: [preguntaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  programa        Programa           @relation(fields: [programaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([programaId, preguntaId])
   @@index([orden])
@@ -179,17 +173,16 @@ model Postulacion {
   estado             EstadoPostulacion?     @default(pendiente)
   fechaPostulacion   DateTime?              @default(now()) @map("fecha_postulacion") @db.Timestamp(0)
   fechaActualizacion DateTime?              @default(now()) @updatedAt @map("fecha_actualizacion") @db.Timestamp(0)
-  notasAdmin         String?                @map("notas_admin") @db.Text
+  notasAdmin         String?                @map("notas_admin")
   estadoGeo          String?                @map("estado_geo") @db.VarChar(100)
   municipio          String?                @db.VarChar(150)
-  
-  negocio            Negocio                @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  programa           Programa               @relation(fields: [programaId], references: [id], onDelete: Cascade)
-  usuario            Usuario                @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  respuestas         RespuestaPostulacion[]
-  trabajadoresJCF    TrabajadorJCF[]
   jovenesJcf         JovenJcf[]
   notas              NotaPostulacion[]
+  negocio            Negocio                @relation(fields: [negocioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  programa           Programa               @relation(fields: [programaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario            Usuario                @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  respuestas         RespuestaPostulacion[]
+  trabajadoresJCF    TrabajadorJCF[]
 
   @@unique([negocioId, programaId])
   @@index([estado])
@@ -205,9 +198,8 @@ model NotaPostulacion {
   id            Int         @id @default(autoincrement())
   postulacionId Int         @map("postulacion_id")
   usuarioId     Int         @map("usuario_id")
-  nota          String      @db.Text
+  nota          String
   fechaCreacion DateTime?   @default(now()) @map("fecha_creacion") @db.Timestamp(0)
-  
   postulacion   Postulacion @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
   usuario       Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
@@ -220,11 +212,10 @@ model RespuestaPostulacion {
   id             Int                @id @default(autoincrement())
   postulacionId  Int                @map("postulacion_id")
   preguntaId     Int                @map("pregunta_id")
-  respuesta      String?            @db.Text
+  respuesta      String?
   fechaRespuesta DateTime?          @default(now()) @map("fecha_respuesta") @db.Timestamp(0)
-  
-  postulacion    Postulacion        @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
-  pregunta       PreguntaFormulario @relation(fields: [preguntaId], references: [id], onDelete: NoAction)
+  postulacion    Postulacion        @relation(fields: [postulacionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pregunta       PreguntaFormulario @relation(fields: [preguntaId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([postulacionId])
   @@index([preguntaId])
@@ -249,8 +240,7 @@ model TrabajadorJCF {
   tutorAsignado  String?     @map("tutor_asignado") @db.VarChar(150)
   activo         Boolean?    @default(true)
   fechaRegistro  DateTime?   @default(now()) @map("fecha_registro") @db.Timestamp(0)
-  
-  postulacion    Postulacion @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
+  postulacion    Postulacion @relation(fields: [postulacionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([activo])
   @@index([postulacionId])
@@ -260,7 +250,7 @@ model TrabajadorJCF {
 model Curso {
   id                 Int                @id @default(autoincrement())
   titulo             String             @db.VarChar(200)
-  descripcion        String?            @db.Text
+  descripcion        String?
   instructor         String?            @db.VarChar(150)
   duracionHoras      Int?               @map("duracion_horas")
   modalidad          Modalidad?         @default(online)
@@ -272,8 +262,7 @@ model Curso {
   creadoPor          Int                @map("creado_por")
   fechaCreacion      DateTime?          @default(now()) @map("fecha_creacion") @db.Timestamp(0)
   fechaActualizacion DateTime?          @default(now()) @updatedAt @map("fecha_actualizacion") @db.Timestamp(0)
-  
-  creador            Usuario            @relation(fields: [creadoPor], references: [id], onDelete: NoAction)
+  creador            Usuario            @relation(fields: [creadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
   inscripciones      InscripcionCurso[]
 
   @@index([creadoPor])
@@ -290,11 +279,10 @@ model InscripcionCurso {
   fechaInscripcion DateTime?          @default(now()) @map("fecha_inscripcion") @db.Timestamp(0)
   estado           EstadoInscripcion? @default(inscrito)
   calificacion     Int?
-  comentarios      String?            @db.Text
-  
-  curso            Curso              @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-  usuario          Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  negocio          Negocio?           @relation(fields: [negocioId], references: [id], onDelete: SetNull)
+  comentarios      String?
+  curso            Curso              @relation(fields: [cursoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  negocio          Negocio?           @relation(fields: [negocioId], references: [id], onUpdate: NoAction)
+  usuario          Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   pago             PagoInscripcion?
 
   @@unique([usuarioId, cursoId], name: "unique_usuario_curso")
@@ -308,7 +296,7 @@ model InscripcionCurso {
 model Aviso {
   id                    Int           @id @default(autoincrement())
   titulo                String        @db.VarChar(200)
-  contenido             String        @db.Text
+  contenido             String
   tipo                  TipoAviso?    @default(informativo)
   destinatario          Destinatario? @default(clientes)
   linkExterno           String?       @map("link_externo") @db.VarChar(500)
@@ -317,9 +305,8 @@ model Aviso {
   fechaExpiracion       DateTime?     @map("fecha_expiracion") @db.Timestamp(0)
   creadoPor             Int           @map("creado_por")
   actualizadoPor        Int?          @map("actualizado_por")
-  
-  creador               Usuario       @relation("AvisoCreador", fields: [creadoPor], references: [id], onDelete: NoAction)
-  actualizadoPorUsuario Usuario?      @relation("AvisoActualizadoPor", fields: [actualizadoPor], references: [id], onDelete: NoAction)
+  actualizadoPorUsuario Usuario?      @relation("AvisoActualizadoPor", fields: [actualizadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  creador               Usuario       @relation("AvisoCreador", fields: [creadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lecturas              AvisoLeido[]
 
   @@index([creadoPor])
@@ -331,23 +318,22 @@ model Aviso {
 }
 
 model EnlaceRecurso {
-  id            Int             @id @default(autoincrement())
-  titulo        String          @db.VarChar(200)
-  descripcion   String?         @db.Text
-  url           String          @db.VarChar(500)
-  tipo          TipoRecurso?    @default(otro)
-  categoria     String?         @db.VarChar(100)
-  visiblePara   VisiblePara?    @default(todos) @map("visible_para")
-  activo        Boolean?        @default(true)
-  costo         Decimal?        @default(0.00) @db.Decimal(10, 2)
-  creadoPor     Int             @map("creado_por")
-  fechaCreacion DateTime?       @default(now()) @map("fecha_creacion") @db.Timestamp(0)
-  formato       String          @default("video")
-  imagenUrl     String?         @map("imagenUrl")
-  imagenPublicId String?        @map("imagenPublicId")
-  
-  accesos       AccesoRecurso[]
-  creador       Usuario         @relation(fields: [creadoPor], references: [id], onDelete: NoAction)
+  id             Int             @id @default(autoincrement())
+  titulo         String          @db.VarChar(200)
+  descripcion    String?
+  url            String          @db.VarChar(500)
+  tipo           TipoRecurso?    @default(otro)
+  categoria      String?         @db.VarChar(100)
+  visiblePara    VisiblePara?    @default(todos) @map("visible_para")
+  activo         Boolean?        @default(true)
+  costo          Decimal?        @default(0.00) @db.Decimal(10, 2)
+  creadoPor      Int             @map("creado_por")
+  fechaCreacion  DateTime?       @default(now()) @map("fecha_creacion") @db.Timestamp(0)
+  formato        String          @default("video")
+  imagenUrl      String?         @map("imagenUrl")
+  imagenPublicId String?         @map("imagenPublicId")
+  accesos        AccesoRecurso[]
+  creador        Usuario         @relation(fields: [creadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([creadoPor])
   @@index([activo])
@@ -360,7 +346,7 @@ model ContactoCapyme {
   id                 Int       @id @default(autoincrement())
   telefono           String?   @db.VarChar(20)
   email              String?   @db.VarChar(150)
-  direccion          String?   @db.Text
+  direccion          String?
   horarioAtencion    String?   @map("horario_atencion") @db.VarChar(200)
   whatsapp           String?   @db.VarChar(20)
   facebookUrl        String?   @map("facebook_url") @db.VarChar(300)
@@ -382,11 +368,10 @@ model PagoInscripcion {
   mercadoPagoId     String?          @unique @map("mercado_pago_id") @db.VarChar(100)
   confirmadoPor     Int?             @map("confirmado_por")
   fechaConfirmacion DateTime?        @map("fecha_confirmacion") @db.Timestamp(0)
-  notas             String?          @db.Text
+  notas             String?
   fechaCreacion     DateTime?        @default(now()) @map("fecha_creacion") @db.Timestamp(0)
-  
-  inscripcion       InscripcionCurso @relation(fields: [inscripcionId], references: [id], onDelete: Cascade)
-  confirmador       Usuario?         @relation("pagosConfirmados", fields: [confirmadoPor], references: [id], onDelete: NoAction)
+  confirmador       Usuario?         @relation("pagosConfirmados", fields: [confirmadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inscripcion       InscripcionCurso @relation(fields: [inscripcionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([estadoPago])
   @@index([inscripcionId])
@@ -401,11 +386,10 @@ model Notificacion {
   usuarioId     Int       @map("usuario_id")
   tipo          String    @db.VarChar(50)
   titulo        String    @db.VarChar(200)
-  mensaje       String    @db.Text
+  mensaje       String
   leida         Boolean   @default(false)
   fechaCreacion DateTime? @default(now()) @map("fecha_creacion") @db.Timestamp(0)
-  
-  usuario       Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario       Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([usuarioId])
   @@index([leida])
@@ -417,9 +401,8 @@ model AvisoLeido {
   usuarioId  Int       @map("usuario_id")
   avisoId    Int       @map("aviso_id")
   fechaLeido DateTime? @default(now()) @map("fecha_leido") @db.Timestamp(0)
-  
-  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  aviso      Aviso     @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+  aviso      Aviso     @relation(fields: [avisoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([usuarioId, avisoId], name: "unique_usuario_aviso")
   @@index([usuarioId])
@@ -434,7 +417,6 @@ model AccesoRecurso {
   estado             EstadoAcceso       @default(pendiente)
   fechaSolicitud     DateTime?          @default(now()) @map("fecha_solicitud") @db.Timestamp(0)
   fechaActualizacion DateTime?          @default(now()) @updatedAt @map("fecha_actualizacion") @db.Timestamp(0)
-  
   enlace             EnlaceRecurso      @relation(fields: [enlaceId], references: [id], onDelete: Cascade)
   usuario            Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   pago               PagoAccesoRecurso?
@@ -456,11 +438,10 @@ model PagoAccesoRecurso {
   mercadoPagoId     String?       @unique @map("mercado_pago_id") @db.VarChar(100)
   confirmadoPor     Int?          @map("confirmado_por")
   fechaConfirmacion DateTime?     @map("fecha_confirmacion") @db.Timestamp(0)
-  notas             String?       @db.Text
+  notas             String?
   fechaCreacion     DateTime?     @default(now()) @map("fecha_creacion") @db.Timestamp(0)
-  
   acceso            AccesoRecurso @relation(fields: [accesoId], references: [id], onDelete: Cascade)
-  confirmador       Usuario?      @relation("pagosAccesoConfirmados", fields: [confirmadoPor], references: [id], onDelete: NoAction)
+  confirmador       Usuario?      @relation("pagosAccesoConfirmados", fields: [confirmadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([estadoPago])
   @@index([accesoId])
@@ -476,28 +457,24 @@ model JovenJcf {
   correo            String?               @db.VarChar(150)
   telefono          String?               @db.VarChar(20)
   curp              String?               @unique @db.VarChar(18)
-  
   negocioId         Int?                  @map("negocio_id")
-  usuarioId         Int                   @map("usuario_id")
-  encargadoId       Int?                  @map("encargado_id")
-  postulacionId     Int?                  @map("postulacion_id")
-  
-  estadoKanban      EstadoPostulacionJcf? @default(PENDIENTE) @map("estado_kanban")
-  estatus           String?               @default("Por registrar") @db.VarChar(50)
-  
   fechaInicio       DateTime?             @map("fecha_inicio") @db.Date
   fechaTermino      DateTime?             @map("fecha_termino") @db.Date
   urlRecurso        String?               @map("url_recurso") @db.VarChar(500)
+  activo            Boolean?              @default(true)
+  usuarioId         Int                   @map("usuario_id")
+  postulacionId     Int?                  @map("postulacion_id")
+  fechaRegistro     DateTime?             @default(now()) @map("fecha_registro") @db.Timestamp(0)
+  estatus           String?               @default("Por registrar") @db.VarChar(50)
   tarjetaEntregada  Boolean?              @default(false) @map("tarjeta_entregada")
   horarios          String?               @db.VarChar(255)
   horarioConfirmado Boolean?              @default(false) @map("horario_confirmado")
-  activo            Boolean?              @default(true)
-  fechaRegistro     DateTime?             @default(now()) @map("fecha_registro") @db.Timestamp(0)
-  
-  negocio           Negocio?              @relation(fields: [negocioId], references: [id], onDelete: SetNull)
-  usuario           Usuario               @relation("JovenCliente", fields: [usuarioId], references: [id], onDelete: Cascade)
-  encargado         Usuario?              @relation("JovenEncargado", fields: [encargadoId], references: [id], onDelete: SetNull)
-  postulacion       Postulacion?          @relation(fields: [postulacionId], references: [id], onDelete: SetNull)
+  encargadoId       Int?                  @map("encargado_id")
+  estadoKanban      EstadoPostulacionJcf? @default(PENDIENTE) @map("estado_kanban")
+  encargado         Usuario?              @relation("JovenEncargado", fields: [encargadoId], references: [id], onUpdate: NoAction)
+  negocio           Negocio?              @relation(fields: [negocioId], references: [id], onUpdate: NoAction)
+  postulacion       Postulacion?          @relation(fields: [postulacionId], references: [id], onUpdate: NoAction)
+  usuario           Usuario               @relation("JovenCliente", fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([activo])
   @@index([usuarioId])
@@ -510,8 +487,8 @@ model JovenJcf {
 model Campana {
   id                 Int                    @id @default(autoincrement())
   titulo             String                 @db.VarChar(200)
-  descripcion        String?                @db.Text
-  historia           String?                @db.Text
+  descripcion        String?
+  historia           String?
   metaRecaudacion    Decimal                @map("meta_recaudacion") @db.Decimal(14, 2)
   montoRecaudado     Decimal?               @default(0.00) @map("monto_recaudado") @db.Decimal(14, 2)
   fechaInicio        DateTime?              @map("fecha_inicio") @db.Date
@@ -522,17 +499,15 @@ model Campana {
   creadoPor          Int                    @map("creado_por")
   fechaCreacion      DateTime?              @default(now()) @map("fecha_creacion") @db.Timestamp(0)
   fechaActualizacion DateTime?              @default(now()) @updatedAt @map("fecha_actualizacion") @db.Timestamp(0)
-  
   tipoCrowdfunding   TipoCrowdfunding       @default(donativo) @map("tipo_crowdfunding")
   interesPct         Decimal?               @map("interes_pct") @db.Decimal(5, 2)
   plazoRetornoDias   Int?                   @map("plazo_retorno_dias")
   imagenUrl          String?                @map("imagen_url") @db.VarChar(500)
   videoUrl           String?                @map("video_url") @db.VarChar(500)
-  
-  negocio            Negocio                @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  creador            Usuario                @relation("CampanaCreador", fields: [creadoPor], references: [id], onDelete: NoAction)
-  inversiones        Inversion[]
   actualizaciones    ActualizacionCampana[]
+  creador            Usuario                @relation("CampanaCreador", fields: [creadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  negocio            Negocio                @relation(fields: [negocioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  inversiones        Inversion[]
 
   @@index([activo])
   @@index([estado])
@@ -550,7 +525,7 @@ model Inversion {
   tipoPago           String     @default("electronico") @map("tipo_pago") @db.VarChar(20)
   estadoPago         EstadoPago @default(pendiente) @map("estado_pago")
   comprobante        String?    @db.VarChar(500)
-  notas              String?    @db.Text
+  notas              String?
   activo             Boolean?   @default(true)
   mercadoPagoId      String?    @unique @map("mercado_pago_id") @db.VarChar(100)
   urlPago            String?    @map("url_pago") @db.VarChar(500)
@@ -559,10 +534,9 @@ model Inversion {
   fechaConfirmacion  DateTime?  @map("fecha_confirmacion") @db.Timestamp(0)
   fechaCreacion      DateTime?  @default(now()) @map("fecha_creacion") @db.Timestamp(0)
   fechaActualizacion DateTime?  @default(now()) @updatedAt @map("fecha_actualizacion") @db.Timestamp(0)
-  
-  campana            Campana    @relation(fields: [campanaId], references: [id], onDelete: Cascade)
-  inversor           Usuario    @relation("InversionInversor", fields: [inversorId], references: [id], onDelete: Cascade)
-  confirmador        Usuario?   @relation("InversionConfirmador", fields: [confirmadoPor], references: [id], onDelete: NoAction)
+  campana            Campana    @relation(fields: [campanaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  confirmador        Usuario?   @relation("InversionConfirmador", fields: [confirmadoPor], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inversor           Usuario    @relation("InversionInversor", fields: [inversorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([campanaId])
   @@index([inversorId])
@@ -577,49 +551,49 @@ model ActualizacionCampana {
   campanaId     Int      @map("campana_id")
   autorId       Int      @map("autor_id")
   titulo        String   @db.VarChar(200)
-  contenido     String   @db.Text
+  contenido     String
   activo        Boolean  @default(true)
   fechaCreacion DateTime @default(now()) @map("fecha_creacion") @db.Timestamp(0)
-  
-  campana       Campana  @relation(fields: [campanaId], references: [id], onDelete: Cascade)
   autor         Usuario  @relation("ActualizacionAutor", fields: [autorId], references: [id], onDelete: NoAction)
+  campana       Campana  @relation(fields: [campanaId], references: [id], onDelete: Cascade)
 
   @@index([campanaId])
   @@map("actualizaciones_campana")
 }
 
 model CatalogoPdf {
-  id          String   @id @default(uuid())
+  id          String   @id
   titulo      String
   descripcion String
   precio      Float
-  linkDrive   String   @map("linkDrive")
+  linkDrive   String
   activo      Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("createdAt") @db.Timestamp(6)
-  updatedAt   DateTime @updatedAt @map("updatedAt") @db.Timestamp(6)
-  imagenUrl   String?  @map("imagenUrl")
-
-  @@map("Catalogo Pdf")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  imagenUrl   String?
 }
-
-// ----------------------------------------------------
-// ENUMS
-// ----------------------------------------------------
 
 enum TipoAviso {
   informativo
-  otro
+  urgente
+  evento
+  recordatorio
 }
 
 enum Destinatario {
+  todos
   clientes
-  otro
+  colaboradores
 }
 
 enum EstadoCampana {
   en_revision
+  aprobada
+  rechazada
   activa
-  cerrada
+  pausada
+  completada
+  cancelada
 }
 
 enum TipoCrowdfunding {
@@ -628,57 +602,64 @@ enum TipoCrowdfunding {
 }
 
 enum Modalidad {
-  online
   presencial
+  online
+  hibrido
 }
 
 enum TipoRecurso {
-  otro
-  documento
   video
+  financiamiento
+  documento
+  otro
 }
 
 enum VisiblePara {
   todos
-  registrados
+  clientes
+  colaboradores
+  admin
 }
 
 enum EstadoInscripcion {
   inscrito
-  cancelado
+  en_curso
   completado
+  abandonado
 }
 
 enum EstadoPago {
   pendiente
-  pagado
+  confirmado
   rechazado
 }
 
 enum EstadoPostulacionJcf {
   PENDIENTE
-  APROBADO
-  RECHAZADO
+  EN_PROCESO
+  POSTULADO
 }
 
 enum Rol {
   admin
-  usuario
+  colaborador
+  cliente
+  lider_jcf
+  encargado_jcf
 }
 
 enum Sexo {
-  M
-  F
-  O
+  masculino
+  femenino
+  otro
 }
 
 enum EstadoAcceso {
   pendiente
-  aprobado
+  activo
   rechazado
 }
 
-// Estos ENUMs no estaban definidos en la creación del PDF pero se mantuvieron de tu proyecto original ya que se utilizan en tablas adicionales:
 enum EstadoPostulacion {
   pendiente
   en_revision
