@@ -8,6 +8,8 @@ router.patch('/aprendices/:id/estado', verifyToken, checkRole('admin', 'lider_jc
 router.patch('/aprendices/:id/encargado', verifyToken, checkRole('admin', 'lider_jcf'), jcfController.asignarEncargado);
 
 router.get('/lideres', verifyToken, checkRole('admin'), jcfController.obtenerLideres);
+router.post('/lideres', verifyToken, checkRole('admin'), jcfController.crearLider);
+
 router.post('/negocios', verifyToken, checkRole('admin'), jcfController.crearNegocio);
 
 router.get('/', verifyToken, jcfController.obtenerJovenes);
