@@ -49,7 +49,7 @@ const obtenerJovenes = async (req, res) => {
 const obtenerAprendices = async (req, res) => {
   try {
     const where = {};
-    if (req.user.rol === 'encargado_jcf' || req.user.rol === 'ENCARGADO_JCF') {
+    if (req.user.rol === 'encargado_jcf') {
       where.encargadoId = req.user.id;
     }
 
@@ -94,7 +94,7 @@ const crearJoven = async (req, res) => {
   try {
     const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, fechaInicio, fechaTermino, ...data } = req.body;
 
-    const usuarioId = (['admin', 'colaborador', 'ADMIN', 'COLABORADOR'].includes(req.user?.rol)) && usuarioIdBody
+    const usuarioId = (['admin', 'colaborador'].includes(req.user?.rol)) && usuarioIdBody
       ? parseInt(usuarioIdBody)
       : req.user?.id;
 
@@ -233,7 +233,7 @@ const asignarEncargado = async (req, res) => {
 const obtenerLideres = async (req, res) => {
   try {
     const lideres = await prisma.usuario.findMany({
-      where: { rol: 'LIDER_JCF' },
+      where: { rol: 'lider_jcf' },
       select: { id: true, nombre: true, apellido: true, email: true, activo: true }
     });
     res.json({ success: true, data: lideres });
@@ -255,7 +255,7 @@ const crearLider = async (req, res) => {
         apellido,
         email,
         password: hashedPassword,
-        rol: 'LIDER_JCF',
+        rol: 'lider_jcf',
         activo: activo !== undefined ? activo : true
       }
     });
