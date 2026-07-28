@@ -91,24 +91,18 @@ const obtenerJovenPorId = async (req, res) => {
 
 const crearJoven = async (req, res) => {
   try {
-    const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, ...data } = req.body;
+    const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, fechaInicio, fechaTermino, ...data } = req.body;
 
     const usuarioId = (['admin', 'colaborador'].includes(req.user?.rol)) && usuarioIdBody
       ? parseInt(usuarioIdBody)
       : req.user?.id;
 
-    const fechaInicio = data.fechaInicio ? new Date(data.fechaInicio).toISOString() : null;
-    const fechaTermino = data.fechaTermino ? new Date(data.fechaTermino).toISOString() : null;
-
-    delete data.fechaInicio;
-    delete data.fechaTermino;
-
     const joven = await prisma.jovenJcf.create({
       data: {
         ...data,
         estatus: estatus || 'Por registrar',
-        fechaInicio,
-        fechaTermino,
+        fechaInicio: fechaInicio ? new Date(fechaInicio).toISOString() : null,
+        fechaTermino: fechaTermino ? new Date(fechaTermino).toISOString() : null,
         tarjetaEntregada: tarjetaEntregada || false,
         horarios: horarios || null,
         horarioConfirmado: horarioConfirmado || false,
@@ -132,21 +126,15 @@ const actualizarJoven = async (req, res) => {
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Joven no encontrado' });
 
-    const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, ...dataActualizar } = req.body;
-
-    const fechaInicio = dataActualizar.fechaInicio ? new Date(dataActualizar.fechaInicio).toISOString() : null;
-    const fechaTermino = dataActualizar.fechaTermino ? new Date(dataActualizar.fechaTermino).toISOString() : null;
-
-    delete dataActualizar.fechaInicio;
-    delete dataActualizar.fechaTermino;
+    const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, fechaInicio, fechaTermino, ...dataActualizar } = req.body;
 
     const joven = await prisma.jovenJcf.update({
       where: { id },
       data: {
         ...dataActualizar,
         estatus: estatus !== undefined ? estatus : existente.estatus,
-        fechaInicio: dataActualizar.hasOwnProperty('fechaInicio') ? fechaInicio : existente.fechaInicio,
-        fechaTermino: dataActualizar.hasOwnProperty('fechaTermino') ? fechaTermino : existente.fechaTermino,
+        fechaInicio: fechaInicio !== undefined ? (fechaInicio ? new Date(fechaInicio).toISOString() : null) : existente.fechaInicio,
+        fechaTermino: fechaTermino !== undefined ? (fechaTermino ? new Date(fechaTermino).toISOString() : null) : existente.fechaTermino,
         tarjetaEntregada: tarjetaEntregada !== undefined ? tarjetaEntregada : existente.tarjetaEntregada,
         horarios: horarios !== undefined ? horarios : existente.horarios,
         horarioConfirmado: horarioConfirmado !== undefined ? horarioConfirmado : existente.horarioConfirmado,
@@ -243,7 +231,7 @@ const asignarEncargado = async (req, res) => {
 
 const obtenerLideres = async (req, res) => {
   try {
-    const lideres = await prisma.usuarios.findMany({
+    const lideres = await prisma.usuario.findMany({
       where: { rol: 'lider_jcf' },
       select: { id: true, nombre: true, apellido: true, email: true, activo: true }
     });
@@ -253,10 +241,29 @@ const obtenerLideres = async (req, res) => {
   }
 };
 
+const crearLider = async (req, res) => {
+  try {
+    const { nombre, apellido, email, password } = req.body;
+    const nuevoLider = await prisma.usuario.create({
+      data: {
+        nombre,
+        apellido,
+        email,
+        password, 
+        rol: 'lider_jcf',
+        activo: true
+      }
+    });
+    res.status(201).json({ success: true, data: nuevoLider });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 const crearNegocio = async (req, res) => {
   try {
     const { usuario_id, nombre_negocio, categoria_id, rfc, direccion, ciudad, estado } = req.body;
-    const negocio = await prisma.negocios.create({
+    const negocio = await prisma.negocio.create({
       data: {
         usuario_id: parseInt(usuario_id),
         nombre_negocio,
@@ -284,5 +291,6 @@ module.exports = {
   actualizarEstadoKanban,
   asignarEncargado,
   obtenerLideres,
+  crearLider,
   crearNegocio
 };
