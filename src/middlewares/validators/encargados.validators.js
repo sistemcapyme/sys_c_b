@@ -1,5 +1,7 @@
 const { body } = require('express-validator');
-const { validateResult } = require('../validation.middleware.js');
+
+// CORRECCIÓN AQUÍ: Quitamos las llaves {} alrededor de validateResult
+const validateResult = require('../validation.middleware.js');
 
 const validateCreateEncargado = [
   body('nombre').notEmpty().isString().isLength({ max: 100 }),
