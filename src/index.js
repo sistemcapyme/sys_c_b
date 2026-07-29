@@ -30,6 +30,7 @@ const pagosController      = require('./controllers/pagos.controller');
 const catalogosRoutes      = require('./routes/catalogos.routes');
 const pagosCatalogosRoutes = require('./routes/pagosCatalogos.routes');
 const pagosRecursosRoutes  = require('./routes/pagosRecursos.routes');
+const encargadosRoutes  = require('./routes/encargados.routes');
 
 const app = express();
 
@@ -82,6 +83,7 @@ app.use('/api/catalogos',      catalogosRoutes);
 app.use('/api/pagos-catalogos', pagosCatalogosRoutes);
 app.use('/api/pagos-recursos',  pagosRecursosRoutes);
 app.use('/contacto', contactoRoutes);
+app.use('/api/encargados', encargadosRoutes);
 
 app.use(errorHandler);
 
