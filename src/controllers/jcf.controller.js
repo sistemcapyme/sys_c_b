@@ -286,6 +286,102 @@ const crearNegocio = async (req, res) => {
   }
 };
 
+const obtenerAprendicesKanban = async (req, res, next) => {
+  try {
+    const usuario = req.usuario || req.user;
+    let whereClause = { activo: true };
+
+    if (usuario.rol === 'encargado_jcf') {
+      whereClause.encargadoId = usuario.id;
+    }
+
+    const aprendices = await prisma.jovenJcf.findMany({
+      where: whereClause,
+      include: {
+        encargado: {
+          select: { nombre: true, apellido: true }
+        }
+      },
+      orderBy: { fechaRegistro: 'desc' }
+    });
+
+    res.json({ success: true, data: aprendices });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const crearAprendizKanban = async (req, res, next) => {
+  try {
+    const { nombre, apellido, usuarioPrograma, passwordPrograma, linkDocumentos, linkNegocio, encargadoId } = req.body;
+    const usuarioActual = req.usuario || req.user;
+
+    const nuevoAprendiz = await prisma.jovenJcf.create({
+      data: {
+        nombre,
+        apellido,
+        usuarioPrograma,
+        passwordPrograma,
+        linkDocumentos,
+        linkNegocio,
+        encargadoId: encargadoId ? Number(encargadoId) : null,
+        usuarioId: usuarioActual.id,
+        estadoKanban: 'PENDIENTE'
+      },
+      include: {
+        encargado: { select: { nombre: true, apellido: true } }
+      }
+    });
+
+    res.status(201).json({ success: true, data: nuevoAprendiz });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const actualizarAprendizKanban = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { nombre, apellido, usuarioPrograma, passwordPrograma, linkDocumentos, linkNegocio, encargadoId } = req.body;
+
+    const aprendizActualizado = await prisma.jovenJcf.update({
+      where: { id: Number(id) },
+      data: {
+        nombre,
+        apellido,
+        usuarioPrograma,
+        passwordPrograma,
+        linkDocumentos,
+        linkNegocio,
+        encargadoId: encargadoId ? Number(encargadoId) : null,
+      },
+      include: {
+        encargado: { select: { nombre: true, apellido: true } }
+      }
+    });
+
+    res.json({ success: true, data: aprendizActualizado });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const actualizarEstadoKanban = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { estadoKanban } = req.body;
+
+    const actualizado = await prisma.jovenJcf.update({
+      where: { id: Number(id) },
+      data: { estadoKanban }
+    });
+
+    res.json({ success: true, data: actualizado });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   obtenerJovenes,
   obtenerJovenPorId,
@@ -298,5 +394,9 @@ module.exports = {
   asignarEncargado,
   obtenerLideres,
   crearLider,
-  crearNegocio
+  crearNegocio,
+  obtenerAprendicesKanban,
+  crearAprendizKanban,
+  actualizarAprendizKanban,
+  actualizarEstadoKanban
 };

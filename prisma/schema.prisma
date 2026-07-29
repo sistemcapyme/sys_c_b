@@ -461,6 +461,12 @@ model JovenJcf {
   fechaInicio       DateTime?             @map("fecha_inicio") @db.Date
   fechaTermino      DateTime?             @map("fecha_termino") @db.Date
   urlRecurso        String?               @map("url_recurso") @db.VarChar(500)
+  
+  usuarioPrograma   String?               @map("usuario_programa") @db.VarChar(150)
+  passwordPrograma  String?               @map("password_programa") @db.VarChar(150)
+  linkDocumentos    String?               @map("link_documentos") @db.VarChar(500)
+  linkNegocio       String?               @map("link_negocio") @db.VarChar(500)
+
   activo            Boolean?              @default(true)
   usuarioId         Int                   @map("usuario_id")
   postulacionId     Int?                  @map("postulacion_id")
@@ -471,6 +477,7 @@ model JovenJcf {
   horarioConfirmado Boolean?              @default(false) @map("horario_confirmado")
   encargadoId       Int?                  @map("encargado_id")
   estadoKanban      EstadoPostulacionJcf? @default(PENDIENTE) @map("estado_kanban")
+  
   encargado         Usuario?              @relation("JovenEncargado", fields: [encargadoId], references: [id], onUpdate: NoAction)
   negocio           Negocio?              @relation(fields: [negocioId], references: [id], onUpdate: NoAction)
   postulacion       Postulacion?          @relation(fields: [postulacionId], references: [id], onUpdate: NoAction)
