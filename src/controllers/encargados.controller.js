@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
-export const getEncargados = async (req, res, next) => {
+const getEncargados = async (req, res, next) => {
   try {
     const encargados = await prisma.usuario.findMany({
       where: { rol: 'encargado_jcf' },
@@ -26,7 +26,7 @@ export const getEncargados = async (req, res, next) => {
   }
 };
 
-export const createEncargado = async (req, res, next) => {
+const createEncargado = async (req, res, next) => {
   try {
     const { nombre, apellido, email, password, telefono } = req.body;
     
@@ -65,7 +65,7 @@ export const createEncargado = async (req, res, next) => {
   }
 };
 
-export const updateEncargado = async (req, res, next) => {
+const updateEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { nombre, apellido, email, password, telefono, activo } = req.body;
@@ -106,7 +106,7 @@ export const updateEncargado = async (req, res, next) => {
   }
 };
 
-export const deleteEncargado = async (req, res, next) => {
+const deleteEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
     await prisma.usuario.delete({
@@ -116,4 +116,11 @@ export const deleteEncargado = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  getEncargados,
+  createEncargado,
+  updateEncargado,
+  deleteEncargado
 };

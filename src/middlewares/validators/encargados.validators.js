@@ -1,7 +1,7 @@
-import { body } from 'express-validator';
-import { validateResult } from '../validation.middleware.js';
+const { body } = require('express-validator');
+const { validateResult } = require('../validation.middleware.js');
 
-export const validateCreateEncargado = [
+const validateCreateEncargado = [
   body('nombre').notEmpty().isString().isLength({ max: 100 }),
   body('apellido').notEmpty().isString().isLength({ max: 100 }),
   body('email').notEmpty().isEmail().isLength({ max: 150 }),
@@ -10,7 +10,7 @@ export const validateCreateEncargado = [
   validateResult
 ];
 
-export const validateUpdateEncargado = [
+const validateUpdateEncargado = [
   body('nombre').optional().isString().isLength({ max: 100 }),
   body('apellido').optional().isString().isLength({ max: 100 }),
   body('email').optional().isEmail().isLength({ max: 150 }),
@@ -19,3 +19,8 @@ export const validateUpdateEncargado = [
   body('activo').optional().isBoolean(),
   validateResult
 ];
+
+module.exports = {
+  validateCreateEncargado,
+  validateUpdateEncargado
+};
