@@ -46,28 +46,6 @@ const obtenerJovenes = async (req, res) => {
   }
 };
 
-const obtenerAprendices = async (req, res) => {
-  try {
-    const where = {};
-    if (req.user.rol === 'encargado_jcf') {
-      where.encargadoId = req.user.id;
-    }
-
-    const aprendices = await prisma.jovenJcf.findMany({
-      where,
-      include: {
-        negocio: true,
-        usuario: {
-          select: { id: true, nombre: true, email: true }
-        }
-      }
-    });
-    res.status(200).json(aprendices);
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
-  }
-};
-
 const obtenerJovenPorId = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -194,24 +172,6 @@ const actualizarRecurso = async (req, res) => {
   }
 };
 
-const actualizarEstadoKanban = async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
-
-    const { estadoKanban } = req.body;
-
-    const aprendizActualizado = await prisma.jovenJcf.update({
-      where: { id },
-      data: { estadoKanban: estadoKanban }
-    });
-    
-    res.status(200).json(aprendizActualizado);
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
-  }
-};
-
 const asignarEncargado = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -285,6 +245,10 @@ const crearNegocio = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
   }
 };
+
+// ==========================================
+// FUNCIONES DEL NUEVO MÓDULO KANBAN
+// ==========================================
 
 const obtenerAprendicesKanban = async (req, res, next) => {
   try {
@@ -368,11 +332,13 @@ const actualizarAprendizKanban = async (req, res, next) => {
 
 const actualizarEstadoKanban = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+
     const { estadoKanban } = req.body;
 
     const actualizado = await prisma.jovenJcf.update({
-      where: { id: Number(id) },
+      where: { id },
       data: { estadoKanban }
     });
 
@@ -380,7 +346,6 @@ const actualizarEstadoKanban = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-
 };
 
 module.exports = {
@@ -390,13 +355,12 @@ module.exports = {
   actualizarJoven,
   toggleActivoJoven,
   actualizarRecurso,
-  obtenerAprendices,
-  actualizarEstadoKanban,
   asignarEncargado,
   obtenerLideres,
   crearLider,
   crearNegocio,
   obtenerAprendicesKanban,
   crearAprendizKanban,
-  actualizarAprendizKanban
+  actualizarAprendizKanban,
+  actualizarEstadoKanban
 };
