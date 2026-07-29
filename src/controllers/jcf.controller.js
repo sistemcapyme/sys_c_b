@@ -397,6 +397,5 @@ module.exports = {
   crearNegocio,
   obtenerAprendicesKanban,
   crearAprendizKanban,
-  actualizarAprendizKanban,
-  actualizarEstadoKanban
+  actualizarAprendizKanban
 };
