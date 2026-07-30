@@ -580,6 +580,20 @@ model CatalogoPdf {
   imagenUrl   String?
 }
 
+model Aprendiz {
+  id                  String   @id @default(uuid())
+  nombreCompleto      String
+  linkPapeles         String
+  credencialesJcf     String
+  nombreNegocio       String
+  linkImagenNegocio   String
+  estado              String   @default("pendiente")
+  encargadoId         String?
+  encargado           Usuario? @relation(fields: [encargadoId], references: [id])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
 enum TipoAviso {
   informativo
   urgente

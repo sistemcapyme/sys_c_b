@@ -246,13 +246,9 @@ const crearNegocio = async (req, res) => {
   }
 };
 
-// ==========================================
-// FUNCIONES DEL NUEVO MÓDULO KANBAN
-// ==========================================
-
-const obtenerAprendicesKanban = async (req, res, next) => {
+const obtenerAprendicesKanban = async (req, res) => {
   try {
-    const usuario = req.usuario || req.user;
+    const usuario = req.usuario || req.user || {};
     let whereClause = { activo: true };
 
     if (usuario.rol === 'encargado_jcf') {
@@ -271,14 +267,14 @@ const obtenerAprendicesKanban = async (req, res, next) => {
 
     res.json({ success: true, data: aprendices });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: 'Error interno al obtener aprendices', detalle: error.message });
   }
 };
 
-const crearAprendizKanban = async (req, res, next) => {
+const crearAprendizKanban = async (req, res) => {
   try {
     const { nombre, apellido, usuarioPrograma, passwordPrograma, linkDocumentos, linkNegocio, encargadoId } = req.body;
-    const usuarioActual = req.usuario || req.user;
+    const usuarioActual = req.usuario || req.user || {};
 
     const nuevoAprendiz = await prisma.jovenJcf.create({
       data: {
@@ -289,7 +285,7 @@ const crearAprendizKanban = async (req, res, next) => {
         linkDocumentos,
         linkNegocio,
         encargadoId: encargadoId ? Number(encargadoId) : null,
-        usuarioId: usuarioActual.id,
+        usuarioId: usuarioActual.id || null,
         estadoKanban: 'PENDIENTE'
       },
       include: {
@@ -299,11 +295,11 @@ const crearAprendizKanban = async (req, res, next) => {
 
     res.status(201).json({ success: true, data: nuevoAprendiz });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: 'Error interno al crear aprendiz', detalle: error.message });
   }
 };
 
-const actualizarAprendizKanban = async (req, res, next) => {
+const actualizarAprendizKanban = async (req, res) => {
   try {
     const { id } = req.params;
     const { nombre, apellido, usuarioPrograma, passwordPrograma, linkDocumentos, linkNegocio, encargadoId } = req.body;
@@ -326,11 +322,11 @@ const actualizarAprendizKanban = async (req, res, next) => {
 
     res.json({ success: true, data: aprendizActualizado });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: 'Error interno al actualizar aprendiz', detalle: error.message });
   }
 };
 
-const actualizarEstadoKanban = async (req, res, next) => {
+const actualizarEstadoKanban = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
@@ -344,7 +340,7 @@ const actualizarEstadoKanban = async (req, res, next) => {
 
     res.json({ success: true, data: actualizado });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: 'Error interno al actualizar estado', detalle: error.message });
   }
 };
 
