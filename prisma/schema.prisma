@@ -19,7 +19,7 @@ model CatalogoPdf {
   imagenUrl   String?
 }
 
-model AccesoRecursos {
+model AccesoRecurso {
   id                    Int                    @id @default(autoincrement())
   enlace_id             Int
   usuario_id            Int
@@ -28,7 +28,7 @@ model AccesoRecursos {
   fecha_actualizacion   DateTime?              @default(now()) @db.Timestamp(0)
   enlace_recurso        EnlaceRecurso          @relation(fields: [enlace_id], references: [id], onDelete: Cascade)
   usuario               Usuario                @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
-  pago_acceso_recurso   PagoAccesoRecursos?
+  pago_acceso_recurso   PagoAccesoRecurso?
 
   @@unique([usuario_id, enlace_id])
   @@index([enlace_id])
@@ -64,8 +64,8 @@ model Aviso {
   fecha_expiracion  DateTime?       @db.Timestamp(0)
   creado_por        Int
   actualizado_por   Int?
-  actualizador      Usuario?        @relation("AvisosActualizados", fields: [actualizado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  creador           Usuario         @relation("AvisosCreados", fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  actualizador      Usuario?        @relation("avisos_actualizado_porTousuarios", fields: [actualizado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  creador           Usuario         @relation("avisos_creado_porTousuarios", fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
   avisos_leidos     AvisoLeido[]
 
   @@index([activo])
@@ -110,7 +110,7 @@ model Campana {
   plazo_retorno_dias      Int?
   imagen_url              String?                   @db.VarChar(500)
   video_url               String?                   @db.VarChar(500)
-  actualizaciones         ActualizacionCampana[]
+  actualizaciones_campana ActualizacionCampana[]
   creador                 Usuario                   @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
   negocio                 Negocio                   @relation(fields: [negocio_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   inversiones             Inversion[]
@@ -167,7 +167,7 @@ model Curso {
   fecha_creacion      DateTime?             @default(now()) @db.Timestamp(0)
   fecha_actualizacion DateTime?             @default(now()) @db.Timestamp(0)
   creador             Usuario               @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inscripciones       InscripcionCurso[]
+  inscripciones_curso InscripcionCurso[]
 
   @@index([activo])
   @@index([creado_por])
@@ -190,7 +190,7 @@ model EnlaceRecurso {
   formato          String             @default("video")
   imagenUrl        String?
   imagenPublicId   String?
-  accesos          AccesoRecursos[]
+  accesos_recursos AccesoRecurso[]
   creador          Usuario            @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([activo])
@@ -223,26 +223,26 @@ model InscripcionCurso {
 }
 
 model Inversion {
-  id                  Int        @id @default(autoincrement())
-  campana_id          Int
-  inversor_id         Int
-  monto               Decimal    @db.Decimal(14, 2)
-  referencia          String     @unique @db.VarChar(30)
-  tipo_pago           String     @default("electronico") @db.VarChar(20)
-  estado_pago         EstadoPago @default(pendiente)
-  comprobante         String?    @db.VarChar(500)
-  notas               String?
-  activo              Boolean?   @default(true)
-  mercado_pago_id     String?    @unique @db.VarChar(100)
-  url_pago            String?    @db.VarChar(500)
-  fecha_pago          DateTime?  @db.Timestamp(0)
-  confirmado_por      Int?
-  fecha_confirmacion  DateTime?  @db.Timestamp(0)
-  fecha_creacion      DateTime?  @default(now()) @db.Timestamp(0)
-  fecha_actualizacion DateTime?  @default(now()) @db.Timestamp(0)
-  campana             Campana    @relation(fields: [campana_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  confirmador         Usuario?   @relation("InversionesConfirmadas", fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inversor            Usuario    @relation("InversionesRealizadas", fields: [inversor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                                            Int        @id @default(autoincrement())
+  campana_id                                    Int
+  inversor_id                                   Int
+  monto                                         Decimal    @db.Decimal(14, 2)
+  referencia                                    String     @unique @db.VarChar(30)
+  tipo_pago                                     String     @default("electronico") @db.VarChar(20)
+  estado_pago                                   EstadoPago @default(pendiente)
+  comprobante                                   String?    @db.VarChar(500)
+  notas                                         String?
+  activo                                        Boolean?   @default(true)
+  mercado_pago_id                               String?    @unique @db.VarChar(100)
+  url_pago                                      String?    @db.VarChar(500)
+  fecha_pago                                    DateTime?  @db.Timestamp(0)
+  confirmado_por                                Int?
+  fecha_confirmacion                            DateTime?  @db.Timestamp(0)
+  fecha_creacion                                DateTime?  @default(now()) @db.Timestamp(0)
+  fecha_actualizacion                           DateTime?  @default(now()) @db.Timestamp(0)
+  campana                                       Campana    @relation(fields: [campana_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  confirmador                                   Usuario?   @relation("inversiones_confirmado_porTousuarios", fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inversor                                      Usuario    @relation("inversiones_inversor_idTousuarios", fields: [inversor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([activo])
   @@index([campana_id])
@@ -253,37 +253,37 @@ model Inversion {
 }
 
 model JovenJcf {
-  id                 Int                   @id @default(autoincrement())
-  nombre             String                @db.VarChar(100)
-  apellido           String                @db.VarChar(100)
-  correo             String?               @db.VarChar(150)
-  telefono           String?               @db.VarChar(20)
-  curp               String?               @unique @db.VarChar(18)
-  negocio_id         Int?
-  fecha_inicio       DateTime?             @db.Date
-  fecha_termino      DateTime?             @db.Date
-  url_recurso        String?               @db.VarChar(500)
-  activo             Boolean?              @default(true)
-  usuario_id         Int
-  postulacion_id     Int?
-  fecha_registro     DateTime?             @default(now()) @db.Timestamp(0)
-  estatus            String?               @default("Por registrar") @db.VarChar(50)
-  tarjeta_entregada  Boolean?              @default(false)
-  horarios           String?               @db.VarChar(255)
-  horario_confirmado Boolean?              @default(false)
-  encargado_id       Int?
-  estado_kanban      EstadoPostulacionJcf? @default(PENDIENTE)
-  nombreCompleto     String?
-  linkPapeles        String?
-  credencialesJcf    String?
-  nombreNegocio      String?
-  linkImagenNegocio  String?
-  encargadoId        Int?
-  encargado          Usuario?              @relation("JovenesEncargados", fields: [encargadoId], references: [id])
-  encargado_original Usuario?              @relation("JovenesEncargadosOriginal", fields: [encargado_id], references: [id], onUpdate: NoAction)
-  negocio            Negocio?              @relation(fields: [negocio_id], references: [id], onUpdate: NoAction)
-  postulacion        Postulacion?          @relation(fields: [postulacion_id], references: [id], onUpdate: NoAction)
-  usuario            Usuario               @relation("JovenesUsuarios", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                                          Int                   @id @default(autoincrement())
+  nombre                                      String                @db.VarChar(100)
+  apellido                                    String                @db.VarChar(100)
+  correo                                      String?               @db.VarChar(150)
+  telefono                                    String?               @db.VarChar(20)
+  curp                                        String?               @unique @db.VarChar(18)
+  negocio_id                                  Int?
+  fecha_inicio                                DateTime?             @db.Date
+  fecha_termino                               DateTime?             @db.Date
+  url_recurso                                 String?               @db.VarChar(500)
+  activo                                      Boolean?              @default(true)
+  usuario_id                                  Int
+  postulacion_id                              Int?
+  fecha_registro                              DateTime?             @default(now()) @db.Timestamp(0)
+  estatus                                     String?               @default("Por registrar") @db.VarChar(50)
+  tarjeta_entregada                           Boolean?              @default(false)
+  horarios                                    String?               @db.VarChar(255)
+  horario_confirmado                          Boolean?              @default(false)
+  encargado_id                                Int?
+  estado_kanban                               EstadoPostulacionJcf? @default(PENDIENTE)
+  nombreCompleto                              String?
+  linkPapeles                                 String?
+  credencialesJcf                             String?
+  nombreNegocio                               String?
+  linkImagenNegocio                           String?
+  encargadoId                                 Int?
+  encargado                                   Usuario?              @relation("jovenes_jcf_encargadoIdTousuarios", fields: [encargadoId], references: [id])
+  encargado_original                          Usuario?              @relation("jovenes_jcf_encargado_idTousuarios", fields: [encargado_id], references: [id], onUpdate: NoAction)
+  negocio                                     Negocio?              @relation(fields: [negocio_id], references: [id], onUpdate: NoAction)
+  postulacion                                 Postulacion?          @relation(fields: [postulacion_id], references: [id], onUpdate: NoAction)
+  usuario                                     Usuario               @relation("jovenes_jcf_usuario_idTousuarios", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([activo])
   @@index([encargado_id])
@@ -315,8 +315,8 @@ model Negocio {
   fecha_actualizacion DateTime?             @default(now()) @db.Timestamp(0)
   folio               String?               @db.VarChar(100)
   campanas            Campana[]
-  inscripciones       InscripcionCurso[]
-  jovenes             JovenJcf[]
+  inscripciones_curso InscripcionCurso[]
+  jovenes_jcf         JovenJcf[]
   categoria           CategoriaNegocio      @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuario             Usuario               @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   postulaciones       Postulacion[]
@@ -358,7 +358,7 @@ model Notificacion {
   @@map("notificaciones")
 }
 
-model PagoAccesoRecursos {
+model PagoAccesoRecurso {
   id                 Int              @id @default(autoincrement())
   acceso_id          Int              @unique
   referencia         String           @unique @db.VarChar(30)
@@ -370,7 +370,7 @@ model PagoAccesoRecursos {
   fecha_confirmacion DateTime?        @db.Timestamp(0)
   notas              String?
   fecha_creacion     DateTime?        @default(now()) @db.Timestamp(0)
-  acceso             AccesoRecursos   @relation(fields: [acceso_id], references: [id], onDelete: Cascade)
+  acceso_recurso     AccesoRecurso    @relation(fields: [acceso_id], references: [id], onDelete: Cascade)
   confirmador        Usuario?         @relation(fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([acceso_id])
@@ -393,7 +393,7 @@ model PagoInscripcion {
   notas               String?
   fecha_creacion      DateTime?           @default(now()) @db.Timestamp(0)
   confirmador         Usuario?            @relation(fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inscripcion         InscripcionCurso    @relation(fields: [inscripcion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  inscripcion_curso   InscripcionCurso    @relation(fields: [inscripcion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([confirmado_por])
   @@index([estado_pago])
@@ -415,12 +415,12 @@ model Postulacion {
   estado_geo             String?                  @db.VarChar(100)
   municipio              String?                  @db.VarChar(150)
   jovenes_jcf            JovenJcf[]
-  notas                  NotaPostulacion[]
+  notas_postulacion      NotaPostulacion[]
   negocio                Negocio                  @relation(fields: [negocio_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   programa               Programa                 @relation(fields: [programa_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   usuario                Usuario                  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  respuestas             RespuestaPostulacion[]
-  trabajadores           TrabajadorJcf[]
+  respuestas_postulacion RespuestaPostulacion[]
+  trabajadores_jcf       TrabajadorJcf[]
 
   @@unique([negocio_id, programa_id])
   @@index([estado, fecha_postulacion])
@@ -445,8 +445,8 @@ model PreguntaFormulario {
   creado_por             Int
   fecha_creacion         DateTime?                @default(now()) @db.Timestamp(0)
   creador                Usuario                  @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  programas              ProgramaPregunta[]
-  respuestas             RespuestaPostulacion[]
+  programas_preguntas    ProgramaPregunta[]
+  respuestas_postulacion RespuestaPostulacion[]
 
   @@index([activa])
   @@index([categoria])
@@ -473,9 +473,9 @@ model Programa {
   estado               String?               @db.VarChar(100)
   municipio            String?               @db.VarChar(150)
   postulaciones        Postulacion[]
-  categoria            CategoriaNegocio?     @relation(fields: [categoria_negocio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categoria_negocio    CategoriaNegocio?     @relation(fields: [categoria_negocio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   creador              Usuario               @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  preguntas            ProgramaPregunta[]
+  programas_preguntas  ProgramaPregunta[]
 
   @@index([activo, categoria_negocio_id])
   @@index([activo])
@@ -553,24 +553,24 @@ model Usuario {
   fecha_registro                                   DateTime?                 @default(now()) @db.Timestamp(0)
   ultima_sesion                                    DateTime?                 @db.Timestamp(0)
   
-  accesos_recursos                                 AccesoRecursos[]
+  accesos_recursos                                 AccesoRecurso[]
   actualizaciones_campana                          ActualizacionCampana[]
-  avisos_actualizados                              Aviso[]                   @relation("AvisosActualizados")
-  avisos_creados                                   Aviso[]                   @relation("AvisosCreados")
+  avisos_actualizados                              Aviso[]                   @relation("avisos_actualizado_porTousuarios")
+  avisos_creados                                   Aviso[]                   @relation("avisos_creado_porTousuarios")
   avisos_leidos                                    AvisoLeido[]
   campanas                                         Campana[]
   cursos                                           Curso[]
   enlaces_recursos                                 EnlaceRecurso[]
   inscripciones_curso                              InscripcionCurso[]
-  inversiones_confirmadas                          Inversion[]               @relation("InversionesConfirmadas")
-  inversiones_realizadas                           Inversion[]               @relation("InversionesRealizadas")
-  jovenes_encargados                               JovenJcf[]                @relation("JovenesEncargados")
-  jovenes_encargados_original                      JovenJcf[]                @relation("JovenesEncargadosOriginal")
-  jovenes_usuarios                                 JovenJcf[]                @relation("JovenesUsuarios")
+  inversiones_confirmadas                          Inversion[]               @relation("inversiones_confirmado_porTousuarios")
+  inversiones_realizadas                           Inversion[]               @relation("inversiones_inversor_idTousuarios")
+  jovenes_encargados                               JovenJcf[]                @relation("jovenes_jcf_encargadoIdTousuarios")
+  jovenes_encargados_original                      JovenJcf[]                @relation("jovenes_jcf_encargado_idTousuarios")
+  jovenes_usuarios                                 JovenJcf[]                @relation("jovenes_jcf_usuario_idTousuarios")
   negocios                                         Negocio[]
   notas_postulacion                                NotaPostulacion[]
   notificaciones                                   Notificacion[]
-  pagos_acceso_recursos                            PagoAccesoRecursos[]
+  pagos_acceso_recursos                            PagoAccesoRecurso[]
   pagos_inscripcion                                PagoInscripcion[]
   postulaciones                                    Postulacion[]
   preguntas_formulario                             PreguntaFormulario[]
