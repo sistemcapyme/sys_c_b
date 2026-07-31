@@ -347,14 +347,7 @@ const actualizarEstadoKanban = async (req, res) => {
 const getAprendices = async (req, res) => {
     try {
         const aprendices = await prisma.jovenJcf.findMany({
-            select: {
-                id: true,
-                nombreCompleto: true,
-                linkPapeles: true,
-                credencialesJcf: true,
-                nombreNegocio: true,
-                linkImagenNegocio: true,
-                encargadoId: true,
+            include: {
                 encargado: true
             }
         })
@@ -369,12 +362,14 @@ const createAprendiz = async (req, res) => {
         const data = req.body
         const nuevoAprendiz = await prisma.jovenJcf.create({
             data: {
+                nombre: data.nombreCompleto || 'Sin nombre',
+                apellido: '-',
                 nombreCompleto: data.nombreCompleto,
                 linkPapeles: data.linkPapeles,
                 credencialesJcf: data.credencialesJcf,
                 nombreNegocio: data.nombreNegocio,
                 linkImagenNegocio: data.linkImagenNegocio,
-                encargadoId: parseInt(data.encargadoId, 10)
+                encargadoId: data.encargadoId ? parseInt(data.encargadoId, 10) : null
             }
         })
         return res.status(201).json(nuevoAprendiz)
@@ -395,7 +390,7 @@ const updateAprendiz = async (req, res) => {
                 credencialesJcf: data.credencialesJcf,
                 nombreNegocio: data.nombreNegocio,
                 linkImagenNegocio: data.linkImagenNegocio,
-                encargadoId: parseInt(data.encargadoId, 10)
+                encargadoId: data.encargadoId ? parseInt(data.encargadoId, 10) : null
             }
         })
         return res.status(200).json(aprendizActualizado)
