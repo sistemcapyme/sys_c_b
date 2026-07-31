@@ -16,9 +16,9 @@ router.get('/:id', verifyToken, jcfController.obtenerJovenPorId);
 router.put('/:id', verifyToken, checkRole('admin', 'colaborador'), jcfController.actualizarJoven);
 router.patch('/:id/toggle-activo', verifyToken, checkRole('admin'), jcfController.toggleActivoJoven);
 router.patch('/:id/recurso', verifyToken, checkRole('admin', 'colaborador'), jcfController.actualizarRecurso);
-router.get('/aprendices', getAprendices)
-router.post('/aprendices', createAprendiz)
-router.put('/aprendices/:id', updateAprendiz)
-router.delete('/aprendices/:id', deleteAprendiz)
+router.get('/aprendices', jcfController.getAprendices)
+router.post('/aprendices', jcfController.createAprendiz)
+router.put('/aprendices/:id', jcfController.updateAprendiz)
+router.delete('/aprendices/:id', jcfController.deleteAprendiz)
 
 module.exports = router;
