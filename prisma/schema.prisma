@@ -263,8 +263,8 @@ model Inversion {
 
 model JovenJcf {
   id                 Int                   @id @default(autoincrement())
-  nombre             String                @db.VarChar(100)
-  apellido           String                @db.VarChar(100)
+  nombre             String?               @db.VarChar(100)
+  apellido           String?               @db.VarChar(100)
   correo             String?               @db.VarChar(150)
   telefono           String?               @db.VarChar(20)
   curp               String?               @unique @db.VarChar(18)
@@ -273,7 +273,7 @@ model JovenJcf {
   fechaTermino       DateTime?             @map("fecha_termino") @db.Date
   urlRecurso         String?               @map("url_recurso") @db.VarChar(500)
   activo             Boolean?              @default(true)
-  usuarioId          Int                   @map("usuario_id")
+  usuarioId          Int?                  @map("usuario_id")
   postulacionId      Int?                  @map("postulacion_id")
   fechaRegistro      DateTime?             @map("fecha_registro") @default(now()) @db.Timestamp(0)
   estatus            String?               @default("Por registrar") @db.VarChar(50)
@@ -294,7 +294,7 @@ model JovenJcf {
   encargado_original Usuario?              @relation("jovenes_jcf_encargado_idTousuarios", fields: [encargadoIdLegacy], references: [id], onUpdate: NoAction)
   negocio            Negocio?              @relation(fields: [negocioId], references: [id], onUpdate: NoAction)
   postulacion        Postulacion?          @relation(fields: [postulacionId], references: [id], onUpdate: NoAction)
-  usuario            Usuario               @relation("jovenes_jcf_usuario_idTousuarios", fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario            Usuario?              @relation("jovenes_jcf_usuario_idTousuarios", fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([activo])
   @@index([encargadoIdLegacy])
