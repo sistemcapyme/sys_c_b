@@ -135,18 +135,18 @@ model CategoriaNegocio {
   @@map("categorias_negocio")
 }
 
-model Contacto {
+model ContactoCapyme {
   id                  Int       @id @default(autoincrement())
   telefono            String?   @db.VarChar(20)
   email               String?   @db.VarChar(150)
   direccion           String?
-  horario_atencion    String?   @db.VarChar(200)
+  horarioAtencion     String?   @map("horario_atencion") @db.VarChar(200)
   whatsapp            String?   @db.VarChar(20)
-  facebook_url        String?   @db.VarChar(300)
-  instagram_url       String?   @db.VarChar(300)
-  linkedin_url        String?   @db.VarChar(300)
-  sitio_web           String?   @db.VarChar(300)
-  fecha_actualizacion DateTime? @default(now()) @db.Timestamp(0)
+  facebookUrl         String?   @map("facebook_url") @db.VarChar(300)
+  instagramUrl        String?   @map("instagram_url") @db.VarChar(300)
+  linkedinUrl         String?   @map("linkedin_url") @db.VarChar(300)
+  sitioWeb            String?   @map("sitio_web") @db.VarChar(300)
+  fechaActualizacion  DateTime? @map("fecha_actualizacion") @default(now()) @db.Timestamp(0)
 
   @@map("contacto_capyme")
 }
@@ -550,8 +550,8 @@ model Usuario {
   telefono                                         String?                   @db.VarChar(20)
   rol                                              Rol
   activo                                           Boolean?                  @default(true)
-  fecha_registro                                   DateTime?                 @default(now()) @db.Timestamp(0)
-  ultima_sesion                                    DateTime?                 @db.Timestamp(0)
+  fechaRegistro                                    DateTime?                 @map("fecha_registro") @default(now()) @db.Timestamp(0)
+  ultimaSesion                                     DateTime?                 @map("ultima_sesion") @db.Timestamp(0)
   
   accesos_recursos                                 AccesoRecurso[]
   actualizaciones_campana                          ActualizacionCampana[]
