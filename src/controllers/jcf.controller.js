@@ -346,9 +346,15 @@ const actualizarEstadoKanban = async (req, res) => {
 
 const getAprendices = async (req, res) => {
     try {
-        const aprendices = await prisma.aprendiz.findMany({
-            include: {
-                negocio: true,
+        const aprendices = await prisma.jovenJcf.findMany({
+            select: {
+                id: true,
+                nombreCompleto: true,
+                linkPapeles: true,
+                credencialesJcf: true,
+                nombreNegocio: true,
+                linkImagenNegocio: true,
+                encargadoId: true,
                 encargado: true
             }
         })
@@ -361,8 +367,15 @@ const getAprendices = async (req, res) => {
 const createAprendiz = async (req, res) => {
     try {
         const data = req.body
-        const nuevoAprendiz = await prisma.aprendiz.create({
-            data
+        const nuevoAprendiz = await prisma.jovenJcf.create({
+            data: {
+                nombreCompleto: data.nombreCompleto,
+                linkPapeles: data.linkPapeles,
+                credencialesJcf: data.credencialesJcf,
+                nombreNegocio: data.nombreNegocio,
+                linkImagenNegocio: data.linkImagenNegocio,
+                encargadoId: parseInt(data.encargadoId, 10)
+            }
         })
         return res.status(201).json(nuevoAprendiz)
     } catch (error) {
@@ -374,9 +387,16 @@ const updateAprendiz = async (req, res) => {
     try {
         const { id } = req.params
         const data = req.body
-        const aprendizActualizado = await prisma.aprendiz.update({
-            where: { id: parseInt(id) },
-            data
+        const aprendizActualizado = await prisma.jovenJcf.update({
+            where: { id: parseInt(id, 10) },
+            data: {
+                nombreCompleto: data.nombreCompleto,
+                linkPapeles: data.linkPapeles,
+                credencialesJcf: data.credencialesJcf,
+                nombreNegocio: data.nombreNegocio,
+                linkImagenNegocio: data.linkImagenNegocio,
+                encargadoId: parseInt(data.encargadoId, 10)
+            }
         })
         return res.status(200).json(aprendizActualizado)
     } catch (error) {
@@ -387,8 +407,8 @@ const updateAprendiz = async (req, res) => {
 const deleteAprendiz = async (req, res) => {
     try {
         const { id } = req.params
-        await prisma.aprendiz.delete({
-            where: { id: parseInt(id) }
+        await prisma.jovenJcf.delete({
+            where: { id: parseInt(id, 10) }
         })
         return res.status(204).send()
     } catch (error) {

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jcfController = require('../controllers/jcf.controller');
+const { getAprendices, createAprendiz, updateAprendiz, deleteAprendiz } = require('../controllers/jcf.controller.js')
 const { verifyToken, checkRole } = require('../middlewares/auth.middleware');
 router.get('/aprendices', verifyToken, checkRole('admin', 'lider_jcf', 'encargado_jcf'), jcfController.obtenerAprendicesKanban);
 router.post('/aprendices', verifyToken, checkRole('admin', 'lider_jcf', 'encargado_jcf'), jcfController.crearAprendizKanban);
@@ -16,9 +17,9 @@ router.get('/:id', verifyToken, jcfController.obtenerJovenPorId);
 router.put('/:id', verifyToken, checkRole('admin', 'colaborador'), jcfController.actualizarJoven);
 router.patch('/:id/toggle-activo', verifyToken, checkRole('admin'), jcfController.toggleActivoJoven);
 router.patch('/:id/recurso', verifyToken, checkRole('admin', 'colaborador'), jcfController.actualizarRecurso);
-router.get('/aprendices', jcfController.getAprendices)
-router.post('/aprendices', jcfController.createAprendiz)
-router.put('/aprendices/:id', jcfController.updateAprendiz)
-router.delete('/aprendices/:id', jcfController.deleteAprendiz)
+router.get('/aprendices', getAprendices)
+router.post('/aprendices', createAprendiz)
+router.put('/aprendices/:id', updateAprendiz)
+router.delete('/aprendices/:id', deleteAprendiz)
 
 module.exports = router;
