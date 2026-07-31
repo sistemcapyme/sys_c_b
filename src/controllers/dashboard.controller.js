@@ -19,7 +19,7 @@ const obtenerEstadisticasGenerales = async (req, res) => {
       prisma.postulacion.count({ where: { estado: 'aprobada' } }),
       prisma.curso.count({ where: { activo: true } }),
       prisma.postulacion.count(),
-      prisma.trabajadorJCF.count({ where: { activo: true } })
+      prisma.trabajadorJcf.count({ where: { activo: true } }) // Corregido: trabajadorJcf en vez de trabajadorJCF
     ]);
 
     res.json({
