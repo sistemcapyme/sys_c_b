@@ -344,6 +344,58 @@ const actualizarEstadoKanban = async (req, res) => {
   }
 };
 
+export const getAprendices = async (req, res) => {
+    try {
+        const aprendices = await prisma.aprendiz.findMany({
+            include: {
+                negocio: true,
+                encargado: true
+            }
+        })
+        return res.status(200).json(aprendices)
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+}
+
+export const createAprendiz = async (req, res) => {
+    try {
+        const data = req.body
+        const nuevoAprendiz = await prisma.aprendiz.create({
+            data
+        })
+        return res.status(201).json(nuevoAprendiz)
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+}
+
+export const updateAprendiz = async (req, res) => {
+    try {
+        const { id } = req.params
+        const data = req.body
+        const aprendizActualizado = await prisma.aprendiz.update({
+            where: { id: parseInt(id) },
+            data
+        })
+        return res.status(200).json(aprendizActualizado)
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+}
+
+export const deleteAprendiz = async (req, res) => {
+    try {
+        const { id } = req.params
+        await prisma.aprendiz.delete({
+            where: { id: parseInt(id) }
+        })
+        return res.status(204).send()
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+}
+
 module.exports = {
   obtenerJovenes,
   obtenerJovenPorId,
@@ -358,5 +410,9 @@ module.exports = {
   obtenerAprendicesKanban,
   crearAprendizKanban,
   actualizarAprendizKanban,
-  actualizarEstadoKanban
+  actualizarEstadoKanban,
+  getAprendices,
+  createAprendiz,
+  updateAprendiz,
+  deleteAprendiz
 };
