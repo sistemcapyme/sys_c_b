@@ -362,7 +362,7 @@ const createAprendiz = async (req, res) => {
         const data = req.body
         const nuevoAprendiz = await prisma.jovenJcf.create({
             data: {
-                nombre: data.nombreCompleto || 'Sin nombre',
+                nombre: data.nombreCompleto || 'Registro JCF',
                 apellido: '-',
                 nombreCompleto: data.nombreCompleto,
                 linkPapeles: data.linkPapeles,
@@ -385,6 +385,7 @@ const updateAprendiz = async (req, res) => {
         const aprendizActualizado = await prisma.jovenJcf.update({
             where: { id: parseInt(id, 10) },
             data: {
+                nombre: data.nombreCompleto || undefined,
                 nombreCompleto: data.nombreCompleto,
                 linkPapeles: data.linkPapeles,
                 credencialesJcf: data.credencialesJcf,
