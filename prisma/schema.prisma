@@ -19,24 +19,25 @@ model CatalogoPdf {
   imagenUrl   String?
 }
 
-model accesos_recursos {
+model AccesoRecursos {
   id                    Int                    @id @default(autoincrement())
   enlace_id             Int
   usuario_id            Int
   estado                EstadoAcceso           @default(pendiente)
   fecha_solicitud       DateTime?              @default(now()) @db.Timestamp(0)
   fecha_actualizacion   DateTime?              @default(now()) @db.Timestamp(0)
-  enlaces_recursos      enlaces_recursos       @relation(fields: [enlace_id], references: [id], onDelete: Cascade)
-  usuarios              usuarios               @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
-  pagos_acceso_recursos pagos_acceso_recursos?
+  enlace_recurso        EnlaceRecurso          @relation(fields: [enlace_id], references: [id], onDelete: Cascade)
+  usuario               Usuario                @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  pago_acceso_recurso   PagoAccesoRecursos?
 
   @@unique([usuario_id, enlace_id])
   @@index([enlace_id])
   @@index([estado])
   @@index([usuario_id])
+  @@map("accesos_recursos")
 }
 
-model actualizaciones_campana {
+model ActualizacionCampana {
   id             Int      @id @default(autoincrement())
   campana_id     Int
   autor_id       Int
@@ -44,49 +45,52 @@ model actualizaciones_campana {
   contenido      String
   activo         Boolean  @default(true)
   fecha_creacion DateTime @default(now()) @db.Timestamp(0)
-  usuarios       usuarios @relation(fields: [autor_id], references: [id], onDelete: NoAction)
-  campanas       campanas @relation(fields: [campana_id], references: [id], onDelete: Cascade)
+  autor          Usuario  @relation(fields: [autor_id], references: [id], onDelete: NoAction)
+  campana        Campana  @relation(fields: [campana_id], references: [id], onDelete: Cascade)
 
   @@index([campana_id])
+  @@map("actualizaciones_campana")
 }
 
-model avisos {
-  id                                        Int             @id @default(autoincrement())
-  titulo                                    String          @db.VarChar(200)
-  contenido                                 String
-  tipo                                      TipoAviso?      @default(informativo)
-  destinatario                              Destinatario?   @default(clientes)
-  link_externo                              String?         @db.VarChar(500)
-  activo                                    Boolean?        @default(true)
-  fecha_publicacion                         DateTime?       @default(now()) @db.Timestamp(0)
-  fecha_expiracion                          DateTime?       @db.Timestamp(0)
-  creado_por                                Int
-  actualizado_por                           Int?
-  usuarios_avisos_actualizado_porTousuarios usuarios?       @relation("avisos_actualizado_porTousuarios", fields: [actualizado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuarios_avisos_creado_porTousuarios      usuarios        @relation("avisos_creado_porTousuarios", fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  avisos_leidos                             avisos_leidos[]
+model Aviso {
+  id                Int             @id @default(autoincrement())
+  titulo            String          @db.VarChar(200)
+  contenido         String
+  tipo              TipoAviso?      @default(informativo)
+  destinatario      Destinatario?   @default(clientes)
+  link_externo      String?         @db.VarChar(500)
+  activo            Boolean?        @default(true)
+  fecha_publicacion DateTime?       @default(now()) @db.Timestamp(0)
+  fecha_expiracion  DateTime?       @db.Timestamp(0)
+  creado_por        Int
+  actualizado_por   Int?
+  actualizador      Usuario?        @relation("AvisosActualizados", fields: [actualizado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  creador           Usuario         @relation("AvisosCreados", fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  avisos_leidos     AvisoLeido[]
 
   @@index([activo])
   @@index([actualizado_por])
   @@index([creado_por])
   @@index([destinatario])
   @@index([fecha_publicacion])
+  @@map("avisos")
 }
 
-model avisos_leidos {
+model AvisoLeido {
   id          Int       @id @default(autoincrement())
   usuario_id  Int
   aviso_id    Int
   fecha_leido DateTime? @default(now()) @db.Timestamp(0)
-  avisos      avisos    @relation(fields: [aviso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  usuarios    usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  aviso       Aviso     @relation(fields: [aviso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario     Usuario   @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([usuario_id, aviso_id])
   @@index([aviso_id])
   @@index([usuario_id])
+  @@map("avisos_leidos")
 }
 
-model campanas {
+model Campana {
   id                      Int                       @id @default(autoincrement())
   titulo                  String                    @db.VarChar(200)
   descripcion             String?
@@ -106,30 +110,32 @@ model campanas {
   plazo_retorno_dias      Int?
   imagen_url              String?                   @db.VarChar(500)
   video_url               String?                   @db.VarChar(500)
-  actualizaciones_campana actualizaciones_campana[]
-  usuarios                usuarios                  @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  negocios                negocios                  @relation(fields: [negocio_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  inversiones             inversiones[]
+  actualizaciones         ActualizacionCampana[]
+  creador                 Usuario                   @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  negocio                 Negocio                   @relation(fields: [negocio_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  inversiones             Inversion[]
 
   @@index([activo])
   @@index([creado_por])
   @@index([estado])
   @@index([negocio_id])
+  @@map("campanas")
 }
 
-model categorias_negocio {
+model CategoriaNegocio {
   id             Int         @id @default(autoincrement())
   nombre         String      @unique @db.VarChar(100)
   descripcion    String?
   activo         Boolean?    @default(true)
   fecha_creacion DateTime?   @default(now()) @db.Timestamp(0)
-  negocios       negocios[]
-  programas      programas[]
+  negocios       Negocio[]
+  programas      Programa[]
 
   @@index([activo])
+  @@map("categorias_negocio")
 }
 
-model contacto_capyme {
+model Contacto {
   id                  Int       @id @default(autoincrement())
   telefono            String?   @db.VarChar(20)
   email               String?   @db.VarChar(150)
@@ -141,9 +147,11 @@ model contacto_capyme {
   linkedin_url        String?   @db.VarChar(300)
   sitio_web           String?   @db.VarChar(300)
   fecha_actualizacion DateTime? @default(now()) @db.Timestamp(0)
+
+  @@map("contacto_capyme")
 }
 
-model cursos {
+model Curso {
   id                  Int                   @id @default(autoincrement())
   titulo              String                @db.VarChar(200)
   descripcion         String?
@@ -158,15 +166,16 @@ model cursos {
   creado_por          Int
   fecha_creacion      DateTime?             @default(now()) @db.Timestamp(0)
   fecha_actualizacion DateTime?             @default(now()) @db.Timestamp(0)
-  usuarios            usuarios              @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inscripciones_curso inscripciones_curso[]
+  creador             Usuario               @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inscripciones       InscripcionCurso[]
 
   @@index([activo])
   @@index([creado_por])
   @@index([fecha_inicio, fecha_fin])
+  @@map("cursos")
 }
 
-model enlaces_recursos {
+model EnlaceRecurso {
   id               Int                @id @default(autoincrement())
   titulo           String             @db.VarChar(200)
   descripcion      String?
@@ -181,16 +190,17 @@ model enlaces_recursos {
   formato          String             @default("video")
   imagenUrl        String?
   imagenPublicId   String?
-  accesos_recursos accesos_recursos[]
-  usuarios         usuarios           @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  accesos          AccesoRecursos[]
+  creador          Usuario            @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([activo])
   @@index([categoria])
   @@index([creado_por])
   @@index([tipo])
+  @@map("enlaces_recursos")
 }
 
-model inscripciones_curso {
+model InscripcionCurso {
   id                Int                @id @default(autoincrement())
   curso_id          Int
   usuario_id        Int
@@ -199,88 +209,91 @@ model inscripciones_curso {
   estado            EstadoInscripcion? @default(inscrito)
   calificacion      Int?
   comentarios       String?
-  cursos            cursos             @relation(fields: [curso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  negocios          negocios?          @relation(fields: [negocio_id], references: [id], onUpdate: NoAction)
-  usuarios          usuarios           @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  pagos_inscripcion pagos_inscripcion?
+  curso             Curso              @relation(fields: [curso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  negocio           Negocio?           @relation(fields: [negocio_id], references: [id], onUpdate: NoAction)
+  usuario           Usuario            @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pago_inscripcion  PagoInscripcion?
 
   @@unique([usuario_id, curso_id])
   @@index([curso_id])
   @@index([estado])
   @@index([negocio_id])
   @@index([usuario_id])
+  @@map("inscripciones_curso")
 }
 
-model inversiones {
-  id                                            Int        @id @default(autoincrement())
-  campana_id                                    Int
-  inversor_id                                   Int
-  monto                                         Decimal    @db.Decimal(14, 2)
-  referencia                                    String     @unique @db.VarChar(30)
-  tipo_pago                                     String     @default("electronico") @db.VarChar(20)
-  estado_pago                                   EstadoPago @default(pendiente)
-  comprobante                                   String?    @db.VarChar(500)
-  notas                                         String?
-  activo                                        Boolean?   @default(true)
-  mercado_pago_id                               String?    @unique @db.VarChar(100)
-  url_pago                                      String?    @db.VarChar(500)
-  fecha_pago                                    DateTime?  @db.Timestamp(0)
-  confirmado_por                                Int?
-  fecha_confirmacion                            DateTime?  @db.Timestamp(0)
-  fecha_creacion                                DateTime?  @default(now()) @db.Timestamp(0)
-  fecha_actualizacion                           DateTime?  @default(now()) @db.Timestamp(0)
-  campanas                                      campanas   @relation(fields: [campana_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  usuarios_inversiones_confirmado_porTousuarios usuarios?  @relation("inversiones_confirmado_porTousuarios", fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuarios_inversiones_inversor_idTousuarios    usuarios   @relation("inversiones_inversor_idTousuarios", fields: [inversor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model Inversion {
+  id                  Int        @id @default(autoincrement())
+  campana_id          Int
+  inversor_id         Int
+  monto               Decimal    @db.Decimal(14, 2)
+  referencia          String     @unique @db.VarChar(30)
+  tipo_pago           String     @default("electronico") @db.VarChar(20)
+  estado_pago         EstadoPago @default(pendiente)
+  comprobante         String?    @db.VarChar(500)
+  notas               String?
+  activo              Boolean?   @default(true)
+  mercado_pago_id     String?    @unique @db.VarChar(100)
+  url_pago            String?    @db.VarChar(500)
+  fecha_pago          DateTime?  @db.Timestamp(0)
+  confirmado_por      Int?
+  fecha_confirmacion  DateTime?  @db.Timestamp(0)
+  fecha_creacion      DateTime?  @default(now()) @db.Timestamp(0)
+  fecha_actualizacion DateTime?  @default(now()) @db.Timestamp(0)
+  campana             Campana    @relation(fields: [campana_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  confirmador         Usuario?   @relation("InversionesConfirmadas", fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inversor            Usuario    @relation("InversionesRealizadas", fields: [inversor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([activo])
   @@index([campana_id])
   @@index([estado_pago])
   @@index([inversor_id])
   @@index([mercado_pago_id])
+  @@map("inversiones")
 }
 
-model jovenes_jcf {
-  id                                          Int                   @id @default(autoincrement())
-  nombre                                      String                @db.VarChar(100)
-  apellido                                    String                @db.VarChar(100)
-  correo                                      String?               @db.VarChar(150)
-  telefono                                    String?               @db.VarChar(20)
-  curp                                        String?               @unique @db.VarChar(18)
-  negocio_id                                  Int?
-  fecha_inicio                                DateTime?             @db.Date
-  fecha_termino                               DateTime?             @db.Date
-  url_recurso                                 String?               @db.VarChar(500)
-  activo                                      Boolean?              @default(true)
-  usuario_id                                  Int
-  postulacion_id                              Int?
-  fecha_registro                              DateTime?             @default(now()) @db.Timestamp(0)
-  estatus                                     String?               @default("Por registrar") @db.VarChar(50)
-  tarjeta_entregada                           Boolean?              @default(false)
-  horarios                                    String?               @db.VarChar(255)
-  horario_confirmado                          Boolean?              @default(false)
-  encargado_id                                Int?
-  estado_kanban                               EstadoPostulacionJcf? @default(PENDIENTE)
-  nombreCompleto                              String?
-  linkPapeles                                 String?
-  credencialesJcf                             String?
-  nombreNegocio                               String?
-  linkImagenNegocio                           String?
-  encargadoId                                 Int?
-  usuarios_jovenes_jcf_encargadoIdTousuarios  usuarios?             @relation("jovenes_jcf_encargadoIdTousuarios", fields: [encargadoId], references: [id])
-  usuarios_jovenes_jcf_encargado_idTousuarios usuarios?             @relation("jovenes_jcf_encargado_idTousuarios", fields: [encargado_id], references: [id], onUpdate: NoAction)
-  negocios                                    negocios?             @relation(fields: [negocio_id], references: [id], onUpdate: NoAction)
-  postulaciones                               postulaciones?        @relation(fields: [postulacion_id], references: [id], onUpdate: NoAction)
-  usuarios_jovenes_jcf_usuario_idTousuarios   usuarios              @relation("jovenes_jcf_usuario_idTousuarios", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model JovenJcf {
+  id                 Int                   @id @default(autoincrement())
+  nombre             String                @db.VarChar(100)
+  apellido           String                @db.VarChar(100)
+  correo             String?               @db.VarChar(150)
+  telefono           String?               @db.VarChar(20)
+  curp               String?               @unique @db.VarChar(18)
+  negocio_id         Int?
+  fecha_inicio       DateTime?             @db.Date
+  fecha_termino      DateTime?             @db.Date
+  url_recurso        String?               @db.VarChar(500)
+  activo             Boolean?              @default(true)
+  usuario_id         Int
+  postulacion_id     Int?
+  fecha_registro     DateTime?             @default(now()) @db.Timestamp(0)
+  estatus            String?               @default("Por registrar") @db.VarChar(50)
+  tarjeta_entregada  Boolean?              @default(false)
+  horarios           String?               @db.VarChar(255)
+  horario_confirmado Boolean?              @default(false)
+  encargado_id       Int?
+  estado_kanban      EstadoPostulacionJcf? @default(PENDIENTE)
+  nombreCompleto     String?
+  linkPapeles        String?
+  credencialesJcf    String?
+  nombreNegocio      String?
+  linkImagenNegocio  String?
+  encargadoId        Int?
+  encargado          Usuario?              @relation("JovenesEncargados", fields: [encargadoId], references: [id])
+  encargado_original Usuario?              @relation("JovenesEncargadosOriginal", fields: [encargado_id], references: [id], onUpdate: NoAction)
+  negocio            Negocio?              @relation(fields: [negocio_id], references: [id], onUpdate: NoAction)
+  postulacion        Postulacion?          @relation(fields: [postulacion_id], references: [id], onUpdate: NoAction)
+  usuario            Usuario               @relation("JovenesUsuarios", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([activo])
   @@index([encargado_id])
   @@index([negocio_id])
   @@index([postulacion_id])
   @@index([usuario_id])
+  @@map("jovenes_jcf")
 }
 
-model negocios {
+model Negocio {
   id                  Int                   @id @default(autoincrement())
   usuario_id          Int
   nombre_negocio      String                @db.VarChar(200)
@@ -301,34 +314,36 @@ model negocios {
   fecha_registro      DateTime?             @default(now()) @db.Timestamp(0)
   fecha_actualizacion DateTime?             @default(now()) @db.Timestamp(0)
   folio               String?               @db.VarChar(100)
-  campanas            campanas[]
-  inscripciones_curso inscripciones_curso[]
-  jovenes_jcf         jovenes_jcf[]
-  categorias_negocio  categorias_negocio    @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuarios            usuarios              @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  postulaciones       postulaciones[]
+  campanas            Campana[]
+  inscripciones       InscripcionCurso[]
+  jovenes             JovenJcf[]
+  categoria           CategoriaNegocio      @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario             Usuario               @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  postulaciones       Postulacion[]
 
   @@index([activo])
   @@index([categoria_id])
   @@index([nombre_negocio])
   @@index([usuario_id, activo])
   @@index([usuario_id])
+  @@map("negocios")
 }
 
-model notas_postulacion {
+model NotaPostulacion {
   id             Int           @id @default(autoincrement())
   postulacion_id Int
   usuario_id     Int
   nota           String
   fecha_creacion DateTime?     @default(now()) @db.Timestamp(0)
-  postulaciones  postulaciones @relation(fields: [postulacion_id], references: [id], onDelete: Cascade)
-  usuarios       usuarios      @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  postulacion    Postulacion   @relation(fields: [postulacion_id], references: [id], onDelete: Cascade)
+  usuario        Usuario       @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
 
   @@index([postulacion_id])
   @@index([usuario_id])
+  @@map("notas_postulacion")
 }
 
-model notificaciones {
+model Notificacion {
   id             Int       @id @default(autoincrement())
   usuario_id     Int
   tipo           String    @db.VarChar(50)
@@ -336,13 +351,14 @@ model notificaciones {
   mensaje        String
   leida          Boolean   @default(false)
   fecha_creacion DateTime? @default(now()) @db.Timestamp(0)
-  usuarios       usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario        Usuario   @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([leida])
   @@index([usuario_id])
+  @@map("notificaciones")
 }
 
-model pagos_acceso_recursos {
+model PagoAccesoRecursos {
   id                 Int              @id @default(autoincrement())
   acceso_id          Int              @unique
   referencia         String           @unique @db.VarChar(30)
@@ -354,16 +370,17 @@ model pagos_acceso_recursos {
   fecha_confirmacion DateTime?        @db.Timestamp(0)
   notas              String?
   fecha_creacion     DateTime?        @default(now()) @db.Timestamp(0)
-  accesos_recursos   accesos_recursos @relation(fields: [acceso_id], references: [id], onDelete: Cascade)
-  usuarios           usuarios?        @relation(fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  acceso             AccesoRecursos   @relation(fields: [acceso_id], references: [id], onDelete: Cascade)
+  confirmador        Usuario?         @relation(fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([acceso_id])
   @@index([estado_pago])
   @@index([mercado_pago_id])
   @@index([referencia])
+  @@map("pagos_acceso_recursos")
 }
 
-model pagos_inscripcion {
+model PagoInscripcion {
   id                  Int                 @id @default(autoincrement())
   inscripcion_id      Int                 @unique
   referencia          String              @unique @db.VarChar(30)
@@ -375,17 +392,18 @@ model pagos_inscripcion {
   fecha_confirmacion  DateTime?           @db.Timestamp(0)
   notas               String?
   fecha_creacion      DateTime?           @default(now()) @db.Timestamp(0)
-  usuarios            usuarios?           @relation(fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  inscripciones_curso inscripciones_curso @relation(fields: [inscripcion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  confirmador         Usuario?            @relation(fields: [confirmado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  inscripcion         InscripcionCurso    @relation(fields: [inscripcion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([confirmado_por])
   @@index([estado_pago])
   @@index([inscripcion_id])
   @@index([mercado_pago_id])
   @@index([referencia])
+  @@map("pagos_inscripcion")
 }
 
-model postulaciones {
+model Postulacion {
   id                     Int                      @id @default(autoincrement())
   negocio_id             Int
   programa_id            Int
@@ -396,13 +414,13 @@ model postulaciones {
   notas_admin            String?
   estado_geo             String?                  @db.VarChar(100)
   municipio              String?                  @db.VarChar(150)
-  jovenes_jcf            jovenes_jcf[]
-  notas_postulacion      notas_postulacion[]
-  negocios               negocios                 @relation(fields: [negocio_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  programas              programas                @relation(fields: [programa_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  usuarios               usuarios                 @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  respuestas_postulacion respuestas_postulacion[]
-  trabajadores_jcf       trabajadores_jcf[]
+  jovenes_jcf            JovenJcf[]
+  notas                  NotaPostulacion[]
+  negocio                Negocio                  @relation(fields: [negocio_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  programa               Programa                 @relation(fields: [programa_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuario                Usuario                  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  respuestas             RespuestaPostulacion[]
+  trabajadores           TrabajadorJcf[]
 
   @@unique([negocio_id, programa_id])
   @@index([estado, fecha_postulacion])
@@ -411,9 +429,10 @@ model postulaciones {
   @@index([negocio_id])
   @@index([programa_id])
   @@index([usuario_id])
+  @@map("postulaciones")
 }
 
-model preguntas_formulario {
+model PreguntaFormulario {
   id                     Int                      @id @default(autoincrement())
   pregunta               String
   tipo_respuesta         TipoRespuesta
@@ -425,17 +444,18 @@ model preguntas_formulario {
   activa                 Boolean?                 @default(true)
   creado_por             Int
   fecha_creacion         DateTime?                @default(now()) @db.Timestamp(0)
-  usuarios               usuarios                 @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  programas_preguntas    programas_preguntas[]
-  respuestas_postulacion respuestas_postulacion[]
+  creador                Usuario                  @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  programas              ProgramaPregunta[]
+  respuestas             RespuestaPostulacion[]
 
   @@index([activa])
   @@index([categoria])
   @@index([creado_por])
   @@index([orden])
+  @@map("preguntas_formulario")
 }
 
-model programas {
+model Programa {
   id                   Int                   @id @default(autoincrement())
   nombre               String                @db.VarChar(200)
   descripcion          String?
@@ -452,48 +472,51 @@ model programas {
   fecha_actualizacion  DateTime?             @default(now()) @db.Timestamp(0)
   estado               String?               @db.VarChar(100)
   municipio            String?               @db.VarChar(150)
-  postulaciones        postulaciones[]
-  categorias_negocio   categorias_negocio?   @relation(fields: [categoria_negocio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  usuarios             usuarios              @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  programas_preguntas  programas_preguntas[]
+  postulaciones        Postulacion[]
+  categoria            CategoriaNegocio?     @relation(fields: [categoria_negocio_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  creador              Usuario               @relation(fields: [creado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  preguntas            ProgramaPregunta[]
 
   @@index([activo, categoria_negocio_id])
   @@index([activo])
   @@index([categoria_negocio_id])
   @@index([creado_por])
   @@index([fecha_inicio, fecha_cierre])
+  @@map("programas")
 }
 
-model programas_preguntas {
+model ProgramaPregunta {
   id                   Int                  @id @default(autoincrement())
   programa_id          Int
   pregunta_id          Int
   orden                Int?                 @default(0)
   activa               Boolean?             @default(true)
   fecha_asignacion     DateTime?            @default(now()) @db.Timestamp(0)
-  preguntas_formulario preguntas_formulario @relation(fields: [pregunta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  programas            programas            @relation(fields: [programa_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pregunta             PreguntaFormulario   @relation(fields: [pregunta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  programa             Programa             @relation(fields: [programa_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([programa_id, pregunta_id])
   @@index([orden])
   @@index([pregunta_id])
   @@index([programa_id])
+  @@map("programas_preguntas")
 }
 
-model respuestas_postulacion {
+model RespuestaPostulacion {
   id                   Int                  @id @default(autoincrement())
   postulacion_id       Int
   pregunta_id          Int
   respuesta            String?
   fecha_respuesta      DateTime?            @default(now()) @db.Timestamp(0)
-  postulaciones        postulaciones        @relation(fields: [postulacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  preguntas_formulario preguntas_formulario @relation(fields: [pregunta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  postulacion          Postulacion          @relation(fields: [postulacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pregunta             PreguntaFormulario   @relation(fields: [pregunta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([postulacion_id])
   @@index([pregunta_id])
+  @@map("respuestas_postulacion")
 }
 
-model trabajadores_jcf {
+model TrabajadorJcf {
   id              Int           @id @default(autoincrement())
   postulacion_id  Int
   nombre          String        @db.VarChar(100)
@@ -511,13 +534,14 @@ model trabajadores_jcf {
   tutor_asignado  String?       @db.VarChar(150)
   activo          Boolean?      @default(true)
   fecha_registro  DateTime?     @default(now()) @db.Timestamp(0)
-  postulaciones   postulaciones @relation(fields: [postulacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  postulacion     Postulacion   @relation(fields: [postulacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([activo])
   @@index([postulacion_id])
+  @@map("trabajadores_jcf")
 }
 
-model usuarios {
+model Usuario {
   id                                               Int                       @id @default(autoincrement())
   nombre                                           String                    @db.VarChar(100)
   apellido                                         String                    @db.VarChar(100)
@@ -528,32 +552,34 @@ model usuarios {
   activo                                           Boolean?                  @default(true)
   fecha_registro                                   DateTime?                 @default(now()) @db.Timestamp(0)
   ultima_sesion                                    DateTime?                 @db.Timestamp(0)
-  accesos_recursos                                 accesos_recursos[]
-  actualizaciones_campana                          actualizaciones_campana[]
-  avisos_avisos_actualizado_porTousuarios          avisos[]                  @relation("avisos_actualizado_porTousuarios")
-  avisos_avisos_creado_porTousuarios               avisos[]                  @relation("avisos_creado_porTousuarios")
-  avisos_leidos                                    avisos_leidos[]
-  campanas                                         campanas[]
-  cursos                                           cursos[]
-  enlaces_recursos                                 enlaces_recursos[]
-  inscripciones_curso                              inscripciones_curso[]
-  inversiones_inversiones_confirmado_porTousuarios inversiones[]             @relation("inversiones_confirmado_porTousuarios")
-  inversiones_inversiones_inversor_idTousuarios    inversiones[]             @relation("inversiones_inversor_idTousuarios")
-  jovenes_jcf_jovenes_jcf_encargadoIdTousuarios    jovenes_jcf[]             @relation("jovenes_jcf_encargadoIdTousuarios")
-  jovenes_jcf_jovenes_jcf_encargado_idTousuarios   jovenes_jcf[]             @relation("jovenes_jcf_encargado_idTousuarios")
-  jovenes_jcf_jovenes_jcf_usuario_idTousuarios     jovenes_jcf[]             @relation("jovenes_jcf_usuario_idTousuarios")
-  negocios                                         negocios[]
-  notas_postulacion                                notas_postulacion[]
-  notificaciones                                   notificaciones[]
-  pagos_acceso_recursos                            pagos_acceso_recursos[]
-  pagos_inscripcion                                pagos_inscripcion[]
-  postulaciones                                    postulaciones[]
-  preguntas_formulario                             preguntas_formulario[]
-  programas                                        programas[]
+  
+  accesos_recursos                                 AccesoRecursos[]
+  actualizaciones_campana                          ActualizacionCampana[]
+  avisos_actualizados                              Aviso[]                   @relation("AvisosActualizados")
+  avisos_creados                                   Aviso[]                   @relation("AvisosCreados")
+  avisos_leidos                                    AvisoLeido[]
+  campanas                                         Campana[]
+  cursos                                           Curso[]
+  enlaces_recursos                                 EnlaceRecurso[]
+  inscripciones_curso                              InscripcionCurso[]
+  inversiones_confirmadas                          Inversion[]               @relation("InversionesConfirmadas")
+  inversiones_realizadas                           Inversion[]               @relation("InversionesRealizadas")
+  jovenes_encargados                               JovenJcf[]                @relation("JovenesEncargados")
+  jovenes_encargados_original                      JovenJcf[]                @relation("JovenesEncargadosOriginal")
+  jovenes_usuarios                                 JovenJcf[]                @relation("JovenesUsuarios")
+  negocios                                         Negocio[]
+  notas_postulacion                                NotaPostulacion[]
+  notificaciones                                   Notificacion[]
+  pagos_acceso_recursos                            PagoAccesoRecursos[]
+  pagos_inscripcion                                PagoInscripcion[]
+  postulaciones                                    Postulacion[]
+  preguntas_formulario                             PreguntaFormulario[]
+  programas                                        Programa[]
 
   @@index([activo])
   @@index([email])
   @@index([rol])
+  @@map("usuarios")
 }
 
 enum Destinatario {
