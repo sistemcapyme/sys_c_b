@@ -344,7 +344,7 @@ const actualizarEstadoKanban = async (req, res) => {
   }
 };
 
-export const getAprendices = async (req, res) => {
+const getAprendices = async (req, res) => {
     try {
         const aprendices = await prisma.aprendiz.findMany({
             include: {
@@ -358,7 +358,7 @@ export const getAprendices = async (req, res) => {
     }
 }
 
-export const createAprendiz = async (req, res) => {
+const createAprendiz = async (req, res) => {
     try {
         const data = req.body
         const nuevoAprendiz = await prisma.aprendiz.create({
@@ -370,7 +370,7 @@ export const createAprendiz = async (req, res) => {
     }
 }
 
-export const updateAprendiz = async (req, res) => {
+const updateAprendiz = async (req, res) => {
     try {
         const { id } = req.params
         const data = req.body
@@ -384,7 +384,7 @@ export const updateAprendiz = async (req, res) => {
     }
 }
 
-export const deleteAprendiz = async (req, res) => {
+const deleteAprendiz = async (req, res) => {
     try {
         const { id } = req.params
         await prisma.aprendiz.delete({
