@@ -7,7 +7,7 @@ const getEncargados = async (req, res, next) => {
   try {
     const encargados = await prisma.usuario.findMany({
       where: {
-        rol: { in: ['encargado_jcf', 'admin', 'lider'] }
+        rol: { in: ['encargado_jcf', 'admin', 'lider_jcf'] }
       },
       select: {
         id: true,
