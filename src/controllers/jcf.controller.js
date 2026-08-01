@@ -7,6 +7,8 @@ const includeBase = {
   postulacion: true
 };
 
+const ESTADOS_KANBAN_VALIDOS = ['ENCARGADO', 'EN_PROCESO', 'POSTULADO'];
+
 const obtenerJovenes = async (req, res) => {
   try {
     const { activo, buscar, postulacionId, estadoGeo, municipioNegocio, estatus } = req.query;
@@ -14,7 +16,7 @@ const obtenerJovenes = async (req, res) => {
     if (activo !== undefined) where.activo = activo === 'true';
     if (postulacionId) where.postulacionId = parseInt(postulacionId);
     if (estatus) where.estatus = estatus;
-    
+
     if (buscar) {
       where.OR = [
         { nombre: { contains: buscar } },
@@ -23,13 +25,13 @@ const obtenerJovenes = async (req, res) => {
         { correo: { contains: buscar } },
       ];
     }
-    
+
     if (estadoGeo || municipioNegocio) {
       where.negocio = {};
       if (estadoGeo) where.negocio.estado = { contains: estadoGeo };
       if (municipioNegocio) where.negocio.ciudad = { contains: municipioNegocio };
     }
-    
+
     if (req.user?.rol === 'cliente') {
       where.usuarioId = req.user.id;
     }
@@ -221,14 +223,13 @@ const crearNegocio = async (req, res) => {
 const obtenerAprendicesKanban = async (req, res) => {
   try {
     const usuario = req.usuario || req.user || {};
-    let whereClause = { activo: true };
 
-    if (usuario.rol === 'encargado_jcf') {
-      whereClause.encargadoId = usuario.id;
+    if (!usuario.id) {
+      return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
     }
 
     const aprendices = await prisma.jovenJcf.findMany({
-      where: whereClause,
+      where: { activo: true, encargadoId: usuario.id },
       include: {
         encargado: {
           select: { nombre: true, apellido: true }
@@ -246,7 +247,7 @@ const obtenerAprendicesKanban = async (req, res) => {
 const crearAprendizKanban = async (req, res) => {
   try {
     const usuarioActual = req.usuario || req.user || {};
-    
+
     const {
       nombre,
       apellido,
@@ -286,7 +287,7 @@ const crearAprendizKanban = async (req, res) => {
         linkImagenNegocio: linkImagenNegocio || null,
         encargadoId: encargadoId ? Number(encargadoId) : null,
         usuarioId: usuarioActual.id || null,
-        estadoKanban: 'PENDIENTE',
+        estadoKanban: 'ENCARGADO',
         activo: true
       },
       include: {
@@ -303,7 +304,7 @@ const crearAprendizKanban = async (req, res) => {
 const actualizarAprendizKanban = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const {
       nombre,
       apellido,
@@ -362,6 +363,10 @@ const actualizarEstadoKanban = async (req, res) => {
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
 
     const { estadoKanban } = req.body;
+
+    if (!ESTADOS_KANBAN_VALIDOS.includes(estadoKanban)) {
+      return res.status(400).json({ success: false, message: 'Estado de kanban inválido' });
+    }
 
     const actualizado = await prisma.jovenJcf.update({
       where: { id },
