@@ -6,7 +6,11 @@ const prisma = new PrismaClient();
 const getEncargados = async (req, res, next) => {
   try {
     const encargados = await prisma.usuario.findMany({
-      where: { rol: 'encargado_jcf' },
+      where: {
+        rol: {
+          in: ['encargado_jcf', 'admin', 'lider']
+        }
+      },
       select: {
         id: true,
         nombre: true,
@@ -14,7 +18,8 @@ const getEncargados = async (req, res, next) => {
         email: true,
         telefono: true,
         activo: true,
-        fechaRegistro: true
+        fechaRegistro: true,
+        rol: true
       },
       orderBy: {
         fechaRegistro: 'desc'
@@ -56,7 +61,8 @@ const createEncargado = async (req, res, next) => {
         apellido: true,
         email: true,
         telefono: true,
-        activo: true
+        activo: true,
+        rol: true
       }
     });
     res.status(201).json(nuevoEncargado);
@@ -97,7 +103,8 @@ const updateEncargado = async (req, res, next) => {
         apellido: true,
         email: true,
         telefono: true,
-        activo: true
+        activo: true,
+        rol: true
       }
     });
     res.json(encargadoActualizado);
