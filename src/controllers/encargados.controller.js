@@ -7,9 +7,7 @@ const getEncargados = async (req, res, next) => {
   try {
     const encargados = await prisma.usuario.findMany({
       where: {
-        rol: {
-          in: ['encargado_jcf', 'admin', 'lider_jcf']
-        }
+        rol: { in: ['encargado_jcf', 'admin', 'lider'] }
       },
       select: {
         id: true,
@@ -17,9 +15,9 @@ const getEncargados = async (req, res, next) => {
         apellido: true,
         email: true,
         telefono: true,
+        rol: true,
         activo: true,
-        fechaRegistro: true,
-        rol: true
+        fechaRegistro: true
       },
       orderBy: {
         fechaRegistro: 'desc'
@@ -34,7 +32,7 @@ const getEncargados = async (req, res, next) => {
 const createEncargado = async (req, res, next) => {
   try {
     const { nombre, apellido, email, password, telefono } = req.body;
-    
+
     const emailExistente = await prisma.usuario.findUnique({
       where: { email }
     });
@@ -44,7 +42,7 @@ const createEncargado = async (req, res, next) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     const nuevoEncargado = await prisma.usuario.create({
       data: {
         nombre,
@@ -61,8 +59,8 @@ const createEncargado = async (req, res, next) => {
         apellido: true,
         email: true,
         telefono: true,
-        activo: true,
-        rol: true
+        rol: true,
+        activo: true
       }
     });
     res.status(201).json(nuevoEncargado);
@@ -75,7 +73,7 @@ const updateEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { nombre, apellido, email, password, telefono, activo } = req.body;
-    
+
     if (email) {
       const emailExistente = await prisma.usuario.findFirst({
         where: {
@@ -89,7 +87,7 @@ const updateEncargado = async (req, res, next) => {
     }
 
     const dataToUpdate = { nombre, apellido, email, telefono, activo };
-    
+
     if (password) {
       dataToUpdate.password = await bcrypt.hash(password, 10);
     }
@@ -103,8 +101,8 @@ const updateEncargado = async (req, res, next) => {
         apellido: true,
         email: true,
         telefono: true,
-        activo: true,
-        rol: true
+        rol: true,
+        activo: true
       }
     });
     res.json(encargadoActualizado);
