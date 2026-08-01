@@ -352,7 +352,18 @@ const updateAprendiz = async (req, res) => {
 
 const crearJoven = async (req, res) => {
     try {
-        const { nombre, apellido, correo, telefono, curp, negocio_id } = req.body
+        const data = req.body
+
+        if (!data || Object.keys(data).length === 0) {
+            return res.status(400).json({ error: "No se recibieron datos válidos" })
+        }
+
+        const nombre = data.nombre || data.nombres || null
+        const apellido = data.apellido || data.apellidos || null
+        const correo = data.correo || data.email || null
+        const telefono = data.telefono || null
+        const curp = data.curp || null
+        const negocio_id = data.negocio_id || data.negocioId || null
 
         if (!nombre || !apellido) {
             return res.status(400).json({ error: "Faltan datos obligatorios" })
@@ -377,7 +388,18 @@ const crearJoven = async (req, res) => {
 
 const createAprendiz = async (req, res) => {
     try {
-        const { nombre, apellido, correo, telefono, curp, negocio_id } = req.body
+        const data = req.body
+
+        if (!data || Object.keys(data).length === 0) {
+            return res.status(400).json({ error: "No se recibieron datos válidos" })
+        }
+
+        const nombre = data.nombre || data.nombres || null
+        const apellido = data.apellido || data.apellidos || null
+        const correo = data.correo || data.email || null
+        const telefono = data.telefono || null
+        const curp = data.curp || null
+        const negocio_id = data.negocio_id || data.negocioId || null
 
         if (!nombre || !apellido) {
             return res.status(400).json({ error: "Faltan datos obligatorios" })
