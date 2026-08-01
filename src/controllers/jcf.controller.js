@@ -68,35 +68,6 @@ const obtenerJovenPorId = async (req, res) => {
   }
 };
 
-const crearJoven = async (req, res) => {
-  try {
-    const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, fechaInicio, fechaTermino, ...data } = req.body;
-
-    const usuarioId = (['admin', 'colaborador'].includes(req.user?.rol)) && usuarioIdBody
-      ? parseInt(usuarioIdBody)
-      : req.user?.id;
-
-    const joven = await prisma.jovenJcf.create({
-      data: {
-        ...data,
-        estatus: estatus || 'Por registrar',
-        fechaInicio: fechaInicio ? new Date(fechaInicio).toISOString() : null,
-        fechaTermino: fechaTermino ? new Date(fechaTermino).toISOString() : null,
-        tarjetaEntregada: tarjetaEntregada || false,
-        horarios: horarios || null,
-        horarioConfirmado: horarioConfirmado || false,
-        usuarioId,
-        ...(negocioId ? { negocioId: parseInt(negocioId) } : {}),
-      },
-      include: includeBase
-    });
-
-    res.status(201).json({ success: true, message: 'Joven creado exitosamente', data: joven });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Error interno', detalle: error.message });
-  }
-};
-
 const actualizarJoven = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -357,27 +328,6 @@ const getAprendices = async (req, res) => {
     }
 }
 
-const createAprendiz = async (req, res) => {
-    try {
-        const data = req.body
-        const nuevoAprendiz = await prisma.jovenJcf.create({
-            data: {
-                nombre: data.nombreCompleto || 'Registro JCF',
-                apellido: '-',
-                nombreCompleto: data.nombreCompleto,
-                linkPapeles: data.linkPapeles,
-                credencialesJcf: data.credencialesJcf,
-                nombreNegocio: data.nombreNegocio,
-                linkImagenNegocio: data.linkImagenNegocio,
-                encargadoId: data.encargadoId ? parseInt(data.encargadoId, 10) : null
-            }
-        })
-        return res.status(201).json(nuevoAprendiz)
-    } catch (error) {
-        return res.status(500).json({ error: error.message })
-    }
-}
-
 const updateAprendiz = async (req, res) => {
     try {
         const { id } = req.params
@@ -395,6 +345,56 @@ const updateAprendiz = async (req, res) => {
             }
         })
         return res.status(200).json(aprendizActualizado)
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+}
+
+const crearJoven = async (req, res) => {
+    try {
+        const { nombre, apellido, correo, telefono, curp, negocio_id } = req.body
+
+        if (!nombre || !apellido) {
+            return res.status(400).json({ error: "Faltan datos obligatorios" })
+        }
+
+        const nuevoJoven = await prisma.jovenJcf.create({
+            data: {
+                nombre,
+                apellido,
+                correo,
+                telefono,
+                curp,
+                negocio_id: negocio_id ? parseInt(negocio_id, 10) : null
+            }
+        })
+
+        return res.status(201).json(nuevoJoven)
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+}
+
+const createAprendiz = async (req, res) => {
+    try {
+        const { nombre, apellido, correo, telefono, curp, negocio_id } = req.body
+
+        if (!nombre || !apellido) {
+            return res.status(400).json({ error: "Faltan datos obligatorios" })
+        }
+
+        const nuevoAprendiz = await prisma.jovenJcf.create({
+            data: {
+                nombre,
+                apellido,
+                correo,
+                telefono,
+                curp,
+                negocio_id: negocio_id ? parseInt(negocio_id, 10) : null
+            }
+        })
+
+        return res.status(201).json(nuevoAprendiz)
     } catch (error) {
         return res.status(500).json({ error: error.message })
     }
