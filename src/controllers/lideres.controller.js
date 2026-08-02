@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 const getLideres = async (req, res, next) => {
   try {
     const lideres = await prisma.usuario.findMany({
-      where: { rol: 'LIDER' }
+      where: { rol: 'lider_jcf' }
     });
     res.status(200).json(lideres);
   } catch (error) {
@@ -17,7 +17,7 @@ const getLiderById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const lider = await prisma.usuario.findUnique({
-      where: { id: Number(id), rol: 'LIDER' }
+      where: { id: Number(id), rol: 'lider_jcf' }
     });
     if (!lider) {
       return res.status(404).json({ message: 'Líder no encontrado' });
@@ -34,7 +34,7 @@ const createLider = async (req, res, next) => {
     const nuevoLider = await prisma.usuario.create({
       data: {
         ...data,
-        rol: 'LIDER'
+        rol: 'lider_jcf'
       }
     });
     res.status(201).json(nuevoLider);

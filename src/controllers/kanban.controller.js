@@ -2,20 +2,16 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-const getKanbanJovenes = async (req, res, next) => {
+const getKanbanAprendices = async (req, res, next) => {
   try {
     const { encargadoId } = req.query;
-    const query = { rol: 'JOVEN' };
+    const query = encargadoId ? { encargadoId: Number(encargadoId) } : {};
     
-    if (encargadoId) {
-      query.encargadoId = Number(encargadoId);
-    }
-    
-    const jovenes = await prisma.usuario.findMany({
+    const aprendices = await prisma.jcf.findMany({
       where: query,
       orderBy: { ordenKanban: 'asc' }
     });
-    res.status(200).json(jovenes);
+    res.status(200).json(aprendices);
   } catch (error) {
     next(error);
   }
@@ -26,7 +22,7 @@ const updateKanbanStatus = async (req, res, next) => {
     const { id } = req.params;
     const { estadoKanban, ordenKanban } = req.body;
     
-    const actualizado = await prisma.usuario.update({
+    const actualizado = await prisma.jcf.update({
       where: { id: Number(id) },
       data: {
         estadoKanban,
@@ -40,6 +36,6 @@ const updateKanbanStatus = async (req, res, next) => {
 };
 
 module.exports = {
-  getKanbanJovenes,
+  getKanbanAprendices,
   updateKanbanStatus
 };
