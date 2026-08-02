@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-export const getLideres = async (req, res, next) => {
+const getLideres = async (req, res, next) => {
   try {
     const lideres = await prisma.usuario.findMany({
       where: { rol: 'LIDER' }
@@ -13,7 +13,7 @@ export const getLideres = async (req, res, next) => {
   }
 };
 
-export const getLiderById = async (req, res, next) => {
+const getLiderById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const lider = await prisma.usuario.findUnique({
@@ -28,7 +28,7 @@ export const getLiderById = async (req, res, next) => {
   }
 };
 
-export const createLider = async (req, res, next) => {
+const createLider = async (req, res, next) => {
   try {
     const data = req.body;
     const nuevoLider = await prisma.usuario.create({
@@ -43,7 +43,7 @@ export const createLider = async (req, res, next) => {
   }
 };
 
-export const updateLider = async (req, res, next) => {
+const updateLider = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = req.body;
@@ -57,7 +57,7 @@ export const updateLider = async (req, res, next) => {
   }
 };
 
-export const deleteLider = async (req, res, next) => {
+const deleteLider = async (req, res, next) => {
   try {
     const { id } = req.params;
     await prisma.usuario.delete({
@@ -67,4 +67,12 @@ export const deleteLider = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  getLideres,
+  getLiderById,
+  createLider,
+  updateLider,
+  deleteLider
 };

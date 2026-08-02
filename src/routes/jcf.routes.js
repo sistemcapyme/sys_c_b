@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import { getLideres, getLiderById, createLider, updateLider, deleteLider } from '../controllers/lideres.controller.js';
-import { getEncargados, getEncargadoById, createEncargado, updateEncargado, deleteEncargado } from '../controllers/encargados.controller.js';
-import { getDistribuciones, asignarJoven } from '../controllers/distribucion.controller.js';
-import { getKanbanJovenes, updateKanbanStatus } from '../controllers/kanban.controller.js';
+const { Router } = require('express');
+const { getLideres, getLiderById, createLider, updateLider, deleteLider } = require('../controllers/lideres.controller.js');
+const { getEncargados, getEncargadoById, createEncargado, updateEncargado, deleteEncargado } = require('../controllers/encargados.controller.js');
+const { getDistribuciones, asignarJoven } = require('../controllers/distribucion.controller.js');
+const { getKanbanJovenes, updateKanbanStatus } = require('../controllers/kanban.controller.js');
 
 const router = Router();
 
@@ -24,4 +24,4 @@ router.put('/distribucion/asignar', asignarJoven);
 router.get('/kanban', getKanbanJovenes);
 router.put('/kanban/:id', updateKanbanStatus);
 
-export default router;
+module.exports = router;

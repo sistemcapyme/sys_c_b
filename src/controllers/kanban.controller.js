@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-export const getKanbanJovenes = async (req, res, next) => {
+const getKanbanJovenes = async (req, res, next) => {
   try {
     const { encargadoId } = req.query;
     const query = encargadoId ? { encargadoId: Number(encargadoId) } : {};
@@ -17,7 +17,7 @@ export const getKanbanJovenes = async (req, res, next) => {
   }
 };
 
-export const updateKanbanStatus = async (req, res, next) => {
+const updateKanbanStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { estadoKanban, ordenKanban } = req.body;
@@ -33,4 +33,9 @@ export const updateKanbanStatus = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  getKanbanJovenes,
+  updateKanbanStatus
 };

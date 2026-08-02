@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-export const getDistribuciones = async (req, res, next) => {
+const getDistribuciones = async (req, res, next) => {
   try {
     const distribuciones = await prisma.joven.findMany({
       include: {
@@ -16,7 +16,7 @@ export const getDistribuciones = async (req, res, next) => {
   }
 };
 
-export const asignarJoven = async (req, res, next) => {
+const asignarJoven = async (req, res, next) => {
   try {
     const { jovenId, encargadoId, liderId } = req.body;
     const asignacion = await prisma.joven.update({
@@ -30,4 +30,9 @@ export const asignarJoven = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  getDistribuciones,
+  asignarJoven
 };

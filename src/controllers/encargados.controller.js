@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-export const getEncargados = async (req, res, next) => {
+const getEncargados = async (req, res, next) => {
   try {
     const encargados = await prisma.encargado.findMany();
     res.status(200).json(encargados);
@@ -11,7 +11,7 @@ export const getEncargados = async (req, res, next) => {
   }
 };
 
-export const getEncargadoById = async (req, res, next) => {
+const getEncargadoById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const encargado = await prisma.encargado.findUnique({
@@ -26,7 +26,7 @@ export const getEncargadoById = async (req, res, next) => {
   }
 };
 
-export const createEncargado = async (req, res, next) => {
+const createEncargado = async (req, res, next) => {
   try {
     const data = req.body;
     const nuevoEncargado = await prisma.encargado.create({
@@ -38,7 +38,7 @@ export const createEncargado = async (req, res, next) => {
   }
 };
 
-export const updateEncargado = async (req, res, next) => {
+const updateEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = req.body;
@@ -52,7 +52,7 @@ export const updateEncargado = async (req, res, next) => {
   }
 };
 
-export const deleteEncargado = async (req, res, next) => {
+const deleteEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
     await prisma.encargado.delete({
@@ -62,4 +62,12 @@ export const deleteEncargado = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+module.exports = {
+  getEncargados,
+  getEncargadoById,
+  createEncargado,
+  updateEncargado,
+  deleteEncargado
 };
