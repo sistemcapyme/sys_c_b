@@ -151,10 +151,19 @@ const asignarEncargado = async (req, res) => {
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
 
     const { encargadoId } = req.body;
+    let encargadoAsignar = null;
+
+    if (encargadoId) {
+      encargadoAsignar = parseInt(encargadoId);
+      const usuario = await prisma.usuario.findUnique({ where: { id: encargadoAsignar } });
+      if (!usuario || !['admin', 'lider_jcf', 'encargado_jcf'].includes(usuario.rol)) {
+        return res.status(400).json({ success: false, message: 'El usuario encargado no existe o no tiene un rol válido (admin, lider_jcf, encargado_jcf)' });
+      }
+    }
 
     const aprendizActualizado = await prisma.jovenJcf.update({
       where: { id },
-      data: { encargadoId: encargadoId ? parseInt(encargadoId) : null },
+      data: { encargadoId: encargadoAsignar },
       include: includeBase
     });
 
@@ -276,6 +285,16 @@ const crearAprendizKanban = async (req, res) => {
       return res.status(400).json({ success: false, error: 'El nombre es requerido' });
     }
 
+    let encargadoAsignar = null;
+
+    if (encargadoId) {
+      encargadoAsignar = Number(encargadoId);
+      const usuario = await prisma.usuario.findUnique({ where: { id: encargadoAsignar } });
+      if (!usuario || !['admin', 'lider_jcf', 'encargado_jcf'].includes(usuario.rol)) {
+        return res.status(400).json({ success: false, error: 'El usuario encargado no existe o no tiene un rol válido (admin, lider_jcf, encargado_jcf)' });
+      }
+    }
+
     const nuevoAprendiz = await prisma.jovenJcf.create({
       data: {
         nombre: nombreFinal,
@@ -285,7 +304,7 @@ const crearAprendizKanban = async (req, res) => {
         linkDocumentos: linkDocumentos || linkPapeles || null,
         linkNegocio: linkNegocio || nombreNegocio || null,
         linkImagenNegocio: linkImagenNegocio || null,
-        encargadoId: encargadoId ? Number(encargadoId) : null,
+        encargadoId: encargadoAsignar,
         usuarioId: usuarioActual.id || null,
         estadoKanban: 'ENCARGADO',
         activo: true
@@ -341,7 +360,19 @@ const actualizarAprendizKanban = async (req, res) => {
     if (linkNegocio !== undefined) dataUpdate.linkNegocio = linkNegocio;
     if (nombreNegocio !== undefined) dataUpdate.linkNegocio = nombreNegocio;
     if (linkImagenNegocio !== undefined) dataUpdate.linkImagenNegocio = linkImagenNegocio;
-    if (encargadoId !== undefined) dataUpdate.encargadoId = encargadoId ? Number(encargadoId) : null;
+    
+    if (encargadoId !== undefined) {
+      if (encargadoId) {
+        const encargadoAsignar = Number(encargadoId);
+        const usuario = await prisma.usuario.findUnique({ where: { id: encargadoAsignar } });
+        if (!usuario || !['admin', 'lider_jcf', 'encargado_jcf'].includes(usuario.rol)) {
+          return res.status(400).json({ success: false, error: 'El usuario encargado no existe o no tiene un rol válido (admin, lider_jcf, encargado_jcf)' });
+        }
+        dataUpdate.encargadoId = encargadoAsignar;
+      } else {
+        dataUpdate.encargadoId = null;
+      }
+    }
 
     const aprendizActualizado = await prisma.jovenJcf.update({
       where: { id: Number(id) },
