@@ -84,6 +84,7 @@ app.use('/api/pagos-catalogos', pagosCatalogosRoutes);
 app.use('/api/pagos-recursos',  pagosRecursosRoutes);
 app.use('/contacto', contactoRoutes);
 app.use('/api/encargados', encargadosRoutes);
+app.use('/api/distribucionjcf', require('./routes/distribucionjcf.routes'));
 
 app.use(errorHandler);
 
