@@ -74,9 +74,9 @@ const login = async (req, res) => {
     }
 
     if (!usuario.activo) {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
-        message: 'Usuario inactivo'
+        message: 'Usuario no válido o inactivo'
       });
     }
 
@@ -107,7 +107,7 @@ const login = async (req, res) => {
       message: 'Login exitoso',
       data: {
         usuario: usuarioSinPassword,
-        token
+        token: token
       }
     });
   } catch (error) {
