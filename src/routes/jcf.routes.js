@@ -68,5 +68,7 @@ router.patch('/aprendices/:id/encargado', asignarEncargado);
 router.patch('/aprendices/:id/toggle-activo', toggleActivoAprendiz);
 router.patch('/aprendices/:id/recurso', actualizarRecurso);
 router.delete('/aprendices/:id', eliminarAprendiz);
+router.get('/aprendices', obtenerAprendicesKanban);
+router.get('/aprendices/todos', obtenerTodosAprendices);
 
 module.exports = router;

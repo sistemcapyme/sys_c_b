@@ -265,8 +265,33 @@ const eliminarAprendiz = async (req, res, next) => {
   }
 };
 
+
+const obtenerTodosAprendices = async (req, res, next) => {
+  try {
+    const usuario = req.usuario || req.user || {};
+    const usuarioId = Number(usuario.id);
+
+    if (!usuarioId || isNaN(usuarioId)) {
+      return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
+    }
+
+    const aprendices = await prisma.jovenJcf.findMany({
+      where: { activo: true },
+      include: {
+        encargado: { select: { id: true, nombre: true, apellido: true } }
+      },
+      orderBy: { fechaRegistro: 'desc' }
+    });
+
+    res.status(200).json({ success: true, data: aprendices.map(mapAprendizSalida) });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   obtenerAprendicesKanban,
+  obtenerTodosAprendices,
   obtenerAprendizPorId,
   crearAprendizKanban,
   actualizarAprendizKanban,
