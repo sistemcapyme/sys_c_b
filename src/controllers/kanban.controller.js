@@ -1,6 +1,24 @@
 const { prisma } = require('../config/database');
 
-const ESTADOS_KANBAN_VALIDOS = ['ENCARGADO', 'EN_PROCESO', 'POSTULADO'];
+const ESTADO_API_A_DB = {
+  ENCARGADO: 'PENDIENTE',
+  EN_PROCESO: 'EN_PROCESO',
+  POSTULADO: 'POSTULADO'
+};
+
+const ESTADO_DB_A_API = {
+  PENDIENTE: 'ENCARGADO',
+  EN_PROCESO: 'EN_PROCESO',
+  POSTULADO: 'POSTULADO'
+};
+
+const mapAprendizSalida = (aprendiz) => {
+  if (!aprendiz) return aprendiz;
+  return {
+    ...aprendiz,
+    estadoKanban: ESTADO_DB_A_API[aprendiz.estadoKanban] || aprendiz.estadoKanban
+  };
+};
 
 const obtenerAprendicesKanban = async (req, res, next) => {
   try {
@@ -19,10 +37,10 @@ const obtenerAprendicesKanban = async (req, res, next) => {
       include: {
         encargado: { select: { nombre: true, apellido: true } }
       },
-      orderBy: { ordenKanban: 'asc' }
+      orderBy: { fechaRegistro: 'desc' }
     });
 
-    res.status(200).json({ success: true, data: aprendices });
+    res.status(200).json({ success: true, data: aprendices.map(mapAprendizSalida) });
   } catch (error) {
     next(error);
   }
@@ -40,7 +58,7 @@ const obtenerAprendizPorId = async (req, res, next) => {
       }
     });
     if (!aprendiz) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    res.status(200).json({ success: true, data: aprendiz });
+    res.status(200).json({ success: true, data: mapAprendizSalida(aprendiz) });
   } catch (error) {
     next(error);
   }
@@ -53,12 +71,8 @@ const crearAprendizKanban = async (req, res, next) => {
       nombre,
       apellido,
       nombreCompleto,
-      usuarioPrograma,
-      passwordPrograma,
       credencialesJcf,
-      linkDocumentos,
       linkPapeles,
-      linkNegocio,
       nombreNegocio,
       linkImagenNegocio,
       encargadoId
@@ -81,15 +95,14 @@ const crearAprendizKanban = async (req, res, next) => {
       data: {
         nombre: nombreFinal,
         apellido: apellidoFinal,
-        usuarioPrograma: usuarioPrograma || null,
-        passwordPrograma: passwordPrograma || credencialesJcf || null,
-        linkDocumentos: linkDocumentos || linkPapeles || null,
-        linkNegocio: linkNegocio || nombreNegocio || null,
+        nombreCompleto: nombreCompleto || null,
+        credencialesJcf: credencialesJcf || null,
+        linkPapeles: linkPapeles || null,
+        nombreNegocio: nombreNegocio || null,
         linkImagenNegocio: linkImagenNegocio || null,
         encargadoId: encargadoId ? Number(encargadoId) : (usuarioActual.rol === 'encargado_jcf' ? usuarioActual.id : null),
         usuarioId: usuarioActual.id || null,
-        estadoKanban: 'ENCARGADO',
-        ordenKanban: 0,
+        estadoKanban: 'PENDIENTE',
         activo: true
       },
       include: {
@@ -97,7 +110,7 @@ const crearAprendizKanban = async (req, res, next) => {
       }
     });
 
-    res.status(201).json({ success: true, data: nuevoAprendiz });
+    res.status(201).json({ success: true, data: mapAprendizSalida(nuevoAprendiz) });
   } catch (error) {
     next(error);
   }
@@ -115,12 +128,8 @@ const actualizarAprendizKanban = async (req, res, next) => {
       nombre,
       apellido,
       nombreCompleto,
-      usuarioPrograma,
-      passwordPrograma,
       credencialesJcf,
-      linkDocumentos,
       linkPapeles,
-      linkNegocio,
       nombreNegocio,
       linkImagenNegocio,
       encargadoId
@@ -138,13 +147,10 @@ const actualizarAprendizKanban = async (req, res, next) => {
     const dataUpdate = {};
     if (nombreFinal) dataUpdate.nombre = nombreFinal;
     if (apellidoFinal !== undefined) dataUpdate.apellido = apellidoFinal;
-    if (usuarioPrograma !== undefined) dataUpdate.usuarioPrograma = usuarioPrograma;
-    if (passwordPrograma !== undefined) dataUpdate.passwordPrograma = passwordPrograma;
-    if (credencialesJcf !== undefined) dataUpdate.passwordPrograma = credencialesJcf;
-    if (linkDocumentos !== undefined) dataUpdate.linkDocumentos = linkDocumentos;
-    if (linkPapeles !== undefined) dataUpdate.linkDocumentos = linkPapeles;
-    if (linkNegocio !== undefined) dataUpdate.linkNegocio = linkNegocio;
-    if (nombreNegocio !== undefined) dataUpdate.linkNegocio = nombreNegocio;
+    if (nombreCompleto !== undefined) dataUpdate.nombreCompleto = nombreCompleto;
+    if (credencialesJcf !== undefined) dataUpdate.credencialesJcf = credencialesJcf;
+    if (linkPapeles !== undefined) dataUpdate.linkPapeles = linkPapeles;
+    if (nombreNegocio !== undefined) dataUpdate.nombreNegocio = nombreNegocio;
     if (linkImagenNegocio !== undefined) dataUpdate.linkImagenNegocio = linkImagenNegocio;
     if (encargadoId !== undefined) dataUpdate.encargadoId = encargadoId ? Number(encargadoId) : null;
 
@@ -156,7 +162,7 @@ const actualizarAprendizKanban = async (req, res, next) => {
       }
     });
 
-    res.status(200).json({ success: true, data: aprendizActualizado });
+    res.status(200).json({ success: true, data: mapAprendizSalida(aprendizActualizado) });
   } catch (error) {
     next(error);
   }
@@ -167,22 +173,18 @@ const actualizarEstadoKanban = async (req, res, next) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
 
-    const { estadoKanban, ordenKanban } = req.body;
+    const { estadoKanban } = req.body;
 
-    if (estadoKanban && !ESTADOS_KANBAN_VALIDOS.includes(estadoKanban)) {
+    if (!estadoKanban || !ESTADO_API_A_DB[estadoKanban]) {
       return res.status(400).json({ success: false, message: 'Estado de kanban inválido' });
     }
 
-    const data = {};
-    if (estadoKanban !== undefined) data.estadoKanban = estadoKanban;
-    if (ordenKanban !== undefined) data.ordenKanban = Number(ordenKanban);
-
     const actualizado = await prisma.jovenJcf.update({
       where: { id },
-      data
+      data: { estadoKanban: ESTADO_API_A_DB[estadoKanban] }
     });
 
-    res.status(200).json({ success: true, data: actualizado });
+    res.status(200).json({ success: true, data: mapAprendizSalida(actualizado) });
   } catch (error) {
     next(error);
   }
@@ -198,7 +200,7 @@ const toggleActivoAprendiz = async (req, res, next) => {
       where: { id },
       data: { activo: !existente.activo }
     });
-    res.status(200).json({ success: true, data: actualizado });
+    res.status(200).json({ success: true, data: mapAprendizSalida(actualizado) });
   } catch (error) {
     next(error);
   }
@@ -215,7 +217,7 @@ const actualizarRecurso = async (req, res, next) => {
       where: { id },
       data: { urlRecurso: urlRecurso || null }
     });
-    res.status(200).json({ success: true, data: actualizado });
+    res.status(200).json({ success: true, data: mapAprendizSalida(actualizado) });
   } catch (error) {
     next(error);
   }
