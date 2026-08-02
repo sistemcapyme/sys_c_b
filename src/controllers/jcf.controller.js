@@ -78,7 +78,21 @@ const actualizarJoven = async (req, res) => {
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Joven no encontrado' });
 
-    const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, fechaInicio, fechaTermino, ...dataActualizar } = req.body;
+    const { activo, urlRecurso, usuarioId: usuarioIdBody, negocioId, municipio, estatus, tarjetaEntregada, horarios, horarioConfirmado, fechaInicio, fechaTermino, encargadoId, ...dataActualizar } = req.body;
+
+    let encargadoAsignar = existente.encargadoId;
+
+    if (encargadoId !== undefined) {
+      if (encargadoId) {
+        encargadoAsignar = parseInt(encargadoId);
+        const usuario = await prisma.usuario.findUnique({ where: { id: encargadoAsignar } });
+        if (!usuario || !['admin', 'lider_jcf', 'encargado_jcf'].includes(usuario.rol)) {
+          return res.status(400).json({ success: false, message: 'El usuario encargado no existe o no tiene un rol válido' });
+        }
+      } else {
+        encargadoAsignar = null;
+      }
+    }
 
     const joven = await prisma.jovenJcf.update({
       where: { id },
@@ -90,6 +104,7 @@ const actualizarJoven = async (req, res) => {
         tarjetaEntregada: tarjetaEntregada !== undefined ? tarjetaEntregada : existente.tarjetaEntregada,
         horarios: horarios !== undefined ? horarios : existente.horarios,
         horarioConfirmado: horarioConfirmado !== undefined ? horarioConfirmado : existente.horarioConfirmado,
+        encargadoId: encargadoAsignar,
         ...(negocioId !== undefined ? { negocioId: negocioId ? parseInt(negocioId) : null } : {}),
       },
       include: includeBase
@@ -157,7 +172,7 @@ const asignarEncargado = async (req, res) => {
       encargadoAsignar = parseInt(encargadoId);
       const usuario = await prisma.usuario.findUnique({ where: { id: encargadoAsignar } });
       if (!usuario || !['admin', 'lider_jcf', 'encargado_jcf'].includes(usuario.rol)) {
-        return res.status(400).json({ success: false, message: 'El usuario encargado no existe o no tiene un rol válido (admin, lider_jcf, encargado_jcf)' });
+        return res.status(400).json({ success: false, message: 'El usuario encargado no existe o no tiene un rol válido' });
       }
     }
 
@@ -176,8 +191,13 @@ const asignarEncargado = async (req, res) => {
 const obtenerLideres = async (req, res) => {
   try {
     const lideres = await prisma.usuario.findMany({
-      where: { rol: 'lider_jcf' },
-      select: { id: true, nombre: true, apellido: true, email: true, activo: true }
+      where: { 
+        rol: {
+          in: ['admin', 'lider_jcf', 'encargado_jcf']
+        },
+        activo: true 
+      },
+      select: { id: true, nombre: true, apellido: true, email: true, activo: true, rol: true }
     });
     res.json({ success: true, data: lideres });
   } catch (error) {
@@ -291,7 +311,7 @@ const crearAprendizKanban = async (req, res) => {
       encargadoAsignar = Number(encargadoId);
       const usuario = await prisma.usuario.findUnique({ where: { id: encargadoAsignar } });
       if (!usuario || !['admin', 'lider_jcf', 'encargado_jcf'].includes(usuario.rol)) {
-        return res.status(400).json({ success: false, error: 'El usuario encargado no existe o no tiene un rol válido (admin, lider_jcf, encargado_jcf)' });
+        return res.status(400).json({ success: false, error: 'El usuario encargado no existe o no tiene un rol válido' });
       }
     }
 
@@ -336,7 +356,8 @@ const actualizarAprendizKanban = async (req, res) => {
       linkNegocio,
       nombreNegocio,
       linkImagenNegocio,
-      encargadoId
+      encargadoId,
+      estadoKanban
     } = req.body;
 
     let nombreFinal = nombre || nombreCompleto;
@@ -360,13 +381,14 @@ const actualizarAprendizKanban = async (req, res) => {
     if (linkNegocio !== undefined) dataUpdate.linkNegocio = linkNegocio;
     if (nombreNegocio !== undefined) dataUpdate.linkNegocio = nombreNegocio;
     if (linkImagenNegocio !== undefined) dataUpdate.linkImagenNegocio = linkImagenNegocio;
+    if (estadoKanban !== undefined) dataUpdate.estadoKanban = estadoKanban;
     
     if (encargadoId !== undefined) {
       if (encargadoId) {
         const encargadoAsignar = Number(encargadoId);
         const usuario = await prisma.usuario.findUnique({ where: { id: encargadoAsignar } });
         if (!usuario || !['admin', 'lider_jcf', 'encargado_jcf'].includes(usuario.rol)) {
-          return res.status(400).json({ success: false, error: 'El usuario encargado no existe o no tiene un rol válido (admin, lider_jcf, encargado_jcf)' });
+          return res.status(400).json({ success: false, error: 'El usuario encargado no existe o no tiene un rol válido' });
         }
         dataUpdate.encargadoId = encargadoAsignar;
       } else {
@@ -424,9 +446,20 @@ const crearJoven = async (req, res) => {
     const telefono = data.telefono || null;
     const curp = data.curp || null;
     const negocioId = data.negocioId || data.negocio_id || null;
+    const encargadoId = data.encargadoId || null;
 
     if (!nombre) {
       return res.status(400).json({ success: false, error: 'Faltan datos obligatorios' });
+    }
+
+    let encargadoAsignar = null;
+
+    if (encargadoId) {
+      encargadoAsignar = parseInt(encargadoId, 10);
+      const usuario = await prisma.usuario.findUnique({ where: { id: encargadoAsignar } });
+      if (!usuario || !['admin', 'lider_jcf', 'encargado_jcf'].includes(usuario.rol)) {
+        return res.status(400).json({ success: false, error: 'El usuario encargado no existe o no tiene un rol válido' });
+      }
     }
 
     const nuevoJoven = await prisma.jovenJcf.create({
@@ -437,6 +470,7 @@ const crearJoven = async (req, res) => {
         telefono,
         curp,
         negocioId: negocioId ? parseInt(negocioId, 10) : null,
+        encargadoId: encargadoAsignar,
         activo: true
       },
       include: includeBase
