@@ -23,13 +23,14 @@ const mapAprendizSalida = (aprendiz) => {
 const obtenerAprendicesKanban = async (req, res, next) => {
   try {
     const usuario = req.usuario || req.user || {};
+    const usuarioId = Number(usuario.id);
 
-    if (!usuario.id) {
+    if (!usuarioId || isNaN(usuarioId)) {
       return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
     }
 
     const aprendices = await prisma.jovenJcf.findMany({
-      where: { activo: true, encargadoId: usuario.id },
+      where: { activo: true, encargadoId: usuarioId },
       include: {
         encargado: { select: { nombre: true, apellido: true } }
       },
@@ -63,8 +64,9 @@ const obtenerAprendizPorId = async (req, res, next) => {
 const crearAprendizKanban = async (req, res, next) => {
   try {
     const usuarioActual = req.usuario || req.user || {};
+    const usuarioId = Number(usuarioActual.id);
 
-    if (!usuarioActual.id) {
+    if (!usuarioId || isNaN(usuarioId)) {
       return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
     }
 
@@ -100,8 +102,8 @@ const crearAprendizKanban = async (req, res, next) => {
         linkPapeles: linkPapeles || null,
         nombreNegocio: nombreNegocio || null,
         linkImagenNegocio: linkImagenNegocio || null,
-        encargadoId: usuarioActual.id,
-        usuarioId: usuarioActual.id,
+        encargadoId: usuarioId,
+        usuarioId: usuarioId,
         estadoKanban: 'PENDIENTE',
         activo: true
       },
@@ -122,10 +124,11 @@ const actualizarAprendizKanban = async (req, res, next) => {
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
 
     const usuarioActual = req.usuario || req.user || {};
+    const usuarioId = Number(usuarioActual.id);
 
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioActual.id) {
+    if (existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
 
@@ -177,6 +180,7 @@ const actualizarEstadoKanban = async (req, res, next) => {
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
 
     const usuarioActual = req.usuario || req.user || {};
+    const usuarioId = Number(usuarioActual.id);
     const { estadoKanban } = req.body;
 
     if (!estadoKanban || !ESTADO_API_A_DB[estadoKanban]) {
@@ -185,7 +189,7 @@ const actualizarEstadoKanban = async (req, res, next) => {
 
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioActual.id) {
+    if (existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
 
@@ -205,9 +209,10 @@ const toggleActivoAprendiz = async (req, res, next) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
     const usuarioActual = req.usuario || req.user || {};
+    const usuarioId = Number(usuarioActual.id);
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioActual.id) {
+    if (existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
     const actualizado = await prisma.jovenJcf.update({
@@ -225,10 +230,11 @@ const actualizarRecurso = async (req, res, next) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
     const usuarioActual = req.usuario || req.user || {};
+    const usuarioId = Number(usuarioActual.id);
     const { urlRecurso } = req.body;
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioActual.id) {
+    if (existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
     const actualizado = await prisma.jovenJcf.update({
@@ -246,9 +252,10 @@ const eliminarAprendiz = async (req, res, next) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
     const usuarioActual = req.usuario || req.user || {};
+    const usuarioId = Number(usuarioActual.id);
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioActual.id) {
+    if (existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
     await prisma.jovenJcf.delete({ where: { id } });
