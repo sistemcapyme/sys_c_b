@@ -54,16 +54,16 @@ router.delete('/encargados/:id', deleteEncargado);
 
 router.get('/distribucion', obtenerDistribucion);
 router.get('/distribucion/encargados-disponibles', obtenerEncargadosDisponibles);
-router.put('/distribucion/:id/asignar', asignarEncargado);
 router.put('/distribucion/asignar-lote', asignarEncargadoLote);
 
-router.get('/kanban', obtenerAprendicesKanban);
-router.get('/kanban/:id', obtenerAprendizPorId);
-router.post('/kanban', crearAprendizKanban);
-router.put('/kanban/:id', actualizarAprendizKanban);
-router.patch('/kanban/:id/estado', actualizarEstadoKanban);
-router.patch('/kanban/:id/activo', toggleActivoAprendiz);
-router.patch('/kanban/:id/recurso', actualizarRecurso);
-router.delete('/kanban/:id', eliminarAprendiz);
+router.get('/aprendices', obtenerAprendicesKanban);
+router.get('/aprendices/:id', obtenerAprendizPorId);
+router.post('/aprendices', crearAprendizKanban);
+router.put('/aprendices/:id', actualizarAprendizKanban);
+router.patch('/aprendices/:id/estado', actualizarEstadoKanban);
+router.patch('/aprendices/:id/encargado', asignarEncargado);
+router.patch('/aprendices/:id/toggle-activo', toggleActivoAprendiz);
+router.patch('/aprendices/:id/recurso', actualizarRecurso);
+router.delete('/aprendices/:id', eliminarAprendiz);
 
 module.exports = router;
