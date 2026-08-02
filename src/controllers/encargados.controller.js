@@ -4,7 +4,9 @@ const prisma = new PrismaClient();
 
 const getEncargados = async (req, res, next) => {
   try {
-    const encargados = await prisma.encargado.findMany();
+    const encargados = await prisma.usuario.findMany({
+      where: { rol: 'ENCARGADO' }
+    });
     res.status(200).json(encargados);
   } catch (error) {
     next(error);
@@ -14,8 +16,8 @@ const getEncargados = async (req, res, next) => {
 const getEncargadoById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const encargado = await prisma.encargado.findUnique({
-      where: { id: Number(id) }
+    const encargado = await prisma.usuario.findUnique({
+      where: { id: Number(id), rol: 'ENCARGADO' }
     });
     if (!encargado) {
       return res.status(404).json({ message: 'Encargado no encontrado' });
@@ -29,8 +31,11 @@ const getEncargadoById = async (req, res, next) => {
 const createEncargado = async (req, res, next) => {
   try {
     const data = req.body;
-    const nuevoEncargado = await prisma.encargado.create({
-      data
+    const nuevoEncargado = await prisma.usuario.create({
+      data: {
+        ...data,
+        rol: 'ENCARGADO'
+      }
     });
     res.status(201).json(nuevoEncargado);
   } catch (error) {
@@ -42,7 +47,7 @@ const updateEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
     const data = req.body;
-    const encargadoActualizado = await prisma.encargado.update({
+    const encargadoActualizado = await prisma.usuario.update({
       where: { id: Number(id) },
       data
     });
@@ -55,7 +60,7 @@ const updateEncargado = async (req, res, next) => {
 const deleteEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await prisma.encargado.delete({
+    await prisma.usuario.delete({
       where: { id: Number(id) }
     });
     res.status(204).send();

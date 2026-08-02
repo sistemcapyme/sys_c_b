@@ -4,11 +4,8 @@ const prisma = new PrismaClient();
 
 const getDistribuciones = async (req, res, next) => {
   try {
-    const distribuciones = await prisma.joven.findMany({
-      include: {
-        encargado: true,
-        lider: true
-      }
+    const distribuciones = await prisma.usuario.findMany({
+      where: { rol: 'JOVEN' }
     });
     res.status(200).json(distribuciones);
   } catch (error) {
@@ -19,7 +16,7 @@ const getDistribuciones = async (req, res, next) => {
 const asignarJoven = async (req, res, next) => {
   try {
     const { jovenId, encargadoId, liderId } = req.body;
-    const asignacion = await prisma.joven.update({
+    const asignacion = await prisma.usuario.update({
       where: { id: Number(jovenId) },
       data: {
         encargadoId: encargadoId ? Number(encargadoId) : null,

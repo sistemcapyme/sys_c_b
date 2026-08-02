@@ -5,9 +5,13 @@ const prisma = new PrismaClient();
 const getKanbanJovenes = async (req, res, next) => {
   try {
     const { encargadoId } = req.query;
-    const query = encargadoId ? { encargadoId: Number(encargadoId) } : {};
+    const query = { rol: 'JOVEN' };
     
-    const jovenes = await prisma.joven.findMany({
+    if (encargadoId) {
+      query.encargadoId = Number(encargadoId);
+    }
+    
+    const jovenes = await prisma.usuario.findMany({
       where: query,
       orderBy: { ordenKanban: 'asc' }
     });
@@ -22,7 +26,7 @@ const updateKanbanStatus = async (req, res, next) => {
     const { id } = req.params;
     const { estadoKanban, ordenKanban } = req.body;
     
-    const actualizado = await prisma.joven.update({
+    const actualizado = await prisma.usuario.update({
       where: { id: Number(id) },
       data: {
         estadoKanban,
