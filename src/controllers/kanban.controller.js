@@ -12,6 +12,8 @@ const ESTADO_DB_A_API = {
   POSTULADO: 'POSTULADO'
 };
 
+const ROLES_ENCARGABLES = ['admin', 'lider_jcf', 'encargado_jcf'];
+
 const mapAprendizSalida = (aprendiz) => {
   if (!aprendiz) return aprendiz;
   return {
@@ -71,44 +73,59 @@ const crearAprendizKanban = async (req, res, next) => {
     }
 
     const {
-      nombre,
-      apellido,
       nombreCompleto,
       credencialesJcf,
       linkPapeles,
       nombreNegocio,
-      linkImagenNegocio
+      linkImagenNegocio,
+      encargadoId
     } = req.body;
 
-    let nombreFinal = nombre || nombreCompleto;
-    let apellidoFinal = apellido || '';
-
-    if (!nombreFinal && nombreCompleto) {
-      const partes = nombreCompleto.split(' ');
-      nombreFinal = partes[0] || '';
-      apellidoFinal = partes.slice(1).join(' ') || '';
+    if (!nombreCompleto || !nombreCompleto.trim()) {
+      return res.status(400).json({ success: false, message: 'El nombre completo es requerido' });
+    }
+    if (!credencialesJcf || !credencialesJcf.trim()) {
+      return res.status(400).json({ success: false, message: 'El usuario y contraseña de la plataforma JCF son requeridos' });
+    }
+    if (!linkPapeles || !linkPapeles.trim()) {
+      return res.status(400).json({ success: false, message: 'El link de documentos es requerido' });
+    }
+    if (!nombreNegocio || !nombreNegocio.trim()) {
+      return res.status(400).json({ success: false, message: 'El nombre del negocio es requerido' });
+    }
+    if (!linkImagenNegocio || !linkImagenNegocio.trim()) {
+      return res.status(400).json({ success: false, message: 'El link de información del negocio es requerido' });
+    }
+    if (!encargadoId) {
+      return res.status(400).json({ success: false, message: 'Debe seleccionar un encargado' });
     }
 
-    if (!nombreFinal) {
-      return res.status(400).json({ success: false, message: 'El nombre es requerido' });
+    const encargadoIdNum = Number(encargadoId);
+    const encargado = await prisma.usuario.findFirst({ where: { id: encargadoIdNum, rol: { in: ROLES_ENCARGABLES }, activo: true } });
+    if (!encargado) {
+      return res.status(400).json({ success: false, message: 'El encargado no existe o no tiene un rol válido' });
     }
+
+    const partesNombre = nombreCompleto.trim().split(' ');
+    const nombreFinal = partesNombre[0] || '';
+    const apellidoFinal = partesNombre.slice(1).join(' ') || '';
 
     const nuevoAprendiz = await prisma.jovenJcf.create({
       data: {
         nombre: nombreFinal,
         apellido: apellidoFinal,
-        nombreCompleto: nombreCompleto || null,
-        credencialesJcf: credencialesJcf || null,
-        linkPapeles: linkPapeles || null,
-        nombreNegocio: nombreNegocio || null,
-        linkImagenNegocio: linkImagenNegocio || null,
-        encargadoId: usuarioId,
+        nombreCompleto: nombreCompleto.trim(),
+        credencialesJcf: credencialesJcf.trim(),
+        linkPapeles: linkPapeles.trim(),
+        nombreNegocio: nombreNegocio.trim(),
+        linkImagenNegocio: linkImagenNegocio.trim(),
+        encargadoId: encargadoIdNum,
         usuarioId: usuarioId,
         estadoKanban: 'PENDIENTE',
         activo: true
       },
       include: {
-        encargado: { select: { nombre: true, apellido: true } }
+        encargado: { select: { id: true, nombre: true, apellido: true, rol: true } }
       }
     });
 
@@ -125,46 +142,62 @@ const actualizarAprendizKanban = async (req, res, next) => {
 
     const usuarioActual = req.usuario || req.user || {};
     const usuarioId = Number(usuarioActual.id);
+    const esAdminOLider = ['admin', 'lider_jcf'].includes(usuarioActual.rol);
 
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioId) {
+    if (!esAdminOLider && existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
 
     const {
-      nombre,
-      apellido,
       nombreCompleto,
       credencialesJcf,
       linkPapeles,
       nombreNegocio,
-      linkImagenNegocio
+      linkImagenNegocio,
+      encargadoId,
+      estadoKanban
     } = req.body;
 
-    let nombreFinal = nombre || nombreCompleto;
-    let apellidoFinal = apellido;
-
-    if (!nombreFinal && nombreCompleto) {
-      const partes = nombreCompleto.split(' ');
-      nombreFinal = partes[0] || '';
-      apellidoFinal = partes.slice(1).join(' ') || '';
-    }
-
     const dataUpdate = {};
-    if (nombreFinal) dataUpdate.nombre = nombreFinal;
-    if (apellidoFinal !== undefined) dataUpdate.apellido = apellidoFinal;
-    if (nombreCompleto !== undefined) dataUpdate.nombreCompleto = nombreCompleto;
+
+    if (nombreCompleto !== undefined) {
+      const partesNombre = nombreCompleto.trim().split(' ');
+      dataUpdate.nombre = partesNombre[0] || '';
+      dataUpdate.apellido = partesNombre.slice(1).join(' ') || '';
+      dataUpdate.nombreCompleto = nombreCompleto.trim();
+    }
     if (credencialesJcf !== undefined) dataUpdate.credencialesJcf = credencialesJcf;
     if (linkPapeles !== undefined) dataUpdate.linkPapeles = linkPapeles;
     if (nombreNegocio !== undefined) dataUpdate.nombreNegocio = nombreNegocio;
     if (linkImagenNegocio !== undefined) dataUpdate.linkImagenNegocio = linkImagenNegocio;
 
+    if (encargadoId !== undefined) {
+      if (encargadoId) {
+        const encargadoIdNum = Number(encargadoId);
+        const encargado = await prisma.usuario.findFirst({ where: { id: encargadoIdNum, rol: { in: ROLES_ENCARGABLES }, activo: true } });
+        if (!encargado) {
+          return res.status(400).json({ success: false, message: 'El encargado no existe o no tiene un rol válido' });
+        }
+        dataUpdate.encargadoId = encargadoIdNum;
+      } else {
+        dataUpdate.encargadoId = null;
+      }
+    }
+
+    if (estadoKanban !== undefined) {
+      if (!ESTADO_API_A_DB[estadoKanban]) {
+        return res.status(400).json({ success: false, message: 'Estado de kanban inválido' });
+      }
+      dataUpdate.estadoKanban = ESTADO_API_A_DB[estadoKanban];
+    }
+
     const aprendizActualizado = await prisma.jovenJcf.update({
       where: { id },
       data: dataUpdate,
       include: {
-        encargado: { select: { nombre: true, apellido: true } }
+        encargado: { select: { id: true, nombre: true, apellido: true, rol: true } }
       }
     });
 
@@ -181,6 +214,7 @@ const actualizarEstadoKanban = async (req, res, next) => {
 
     const usuarioActual = req.usuario || req.user || {};
     const usuarioId = Number(usuarioActual.id);
+    const esAdminOLider = ['admin', 'lider_jcf'].includes(usuarioActual.rol);
     const { estadoKanban } = req.body;
 
     if (!estadoKanban || !ESTADO_API_A_DB[estadoKanban]) {
@@ -189,7 +223,7 @@ const actualizarEstadoKanban = async (req, res, next) => {
 
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioId) {
+    if (!esAdminOLider && existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
 
@@ -210,9 +244,10 @@ const toggleActivoAprendiz = async (req, res, next) => {
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
     const usuarioActual = req.usuario || req.user || {};
     const usuarioId = Number(usuarioActual.id);
+    const esAdminOLider = ['admin', 'lider_jcf'].includes(usuarioActual.rol);
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioId) {
+    if (!esAdminOLider && existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
     const actualizado = await prisma.jovenJcf.update({
@@ -231,10 +266,11 @@ const actualizarRecurso = async (req, res, next) => {
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
     const usuarioActual = req.usuario || req.user || {};
     const usuarioId = Number(usuarioActual.id);
+    const esAdminOLider = ['admin', 'lider_jcf'].includes(usuarioActual.rol);
     const { urlRecurso } = req.body;
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioId) {
+    if (!esAdminOLider && existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
     const actualizado = await prisma.jovenJcf.update({
@@ -253,9 +289,10 @@ const eliminarAprendiz = async (req, res, next) => {
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
     const usuarioActual = req.usuario || req.user || {};
     const usuarioId = Number(usuarioActual.id);
+    const esAdminOLider = ['admin', 'lider_jcf'].includes(usuarioActual.rol);
     const existente = await prisma.jovenJcf.findUnique({ where: { id } });
     if (!existente) return res.status(404).json({ success: false, message: 'Aprendiz no encontrado' });
-    if (existente.encargadoId !== usuarioId) {
+    if (!esAdminOLider && existente.encargadoId !== usuarioId) {
       return res.status(403).json({ success: false, message: 'No tienes permiso sobre este registro' });
     }
     await prisma.jovenJcf.delete({ where: { id } });
@@ -264,7 +301,6 @@ const eliminarAprendiz = async (req, res, next) => {
     next(error);
   }
 };
-
 
 const obtenerTodosAprendices = async (req, res, next) => {
   try {
@@ -278,7 +314,7 @@ const obtenerTodosAprendices = async (req, res, next) => {
     const aprendices = await prisma.jovenJcf.findMany({
       where: { activo: true },
       include: {
-        encargado: { select: { id: true, nombre: true, apellido: true } }
+        encargado: { select: { id: true, nombre: true, apellido: true, rol: true } }
       },
       orderBy: { fechaRegistro: 'desc' }
     });
