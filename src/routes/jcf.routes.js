@@ -28,6 +28,7 @@ const {
 
 const {
   obtenerAprendicesKanban,
+  obtenerTodosAprendices,
   obtenerAprendizPorId,
   crearAprendizKanban,
   actualizarAprendizKanban,
@@ -59,6 +60,7 @@ router.get('/distribucion', obtenerDistribucion);
 router.get('/distribucion/encargados-disponibles', obtenerEncargadosDisponibles);
 router.put('/distribucion/asignar-lote', asignarEncargadoLote);
 
+router.get('/aprendices/todos', obtenerTodosAprendices);
 router.get('/aprendices', obtenerAprendicesKanban);
 router.get('/aprendices/:id', obtenerAprendizPorId);
 router.post('/aprendices', crearAprendizKanban);
@@ -68,7 +70,5 @@ router.patch('/aprendices/:id/encargado', asignarEncargado);
 router.patch('/aprendices/:id/toggle-activo', toggleActivoAprendiz);
 router.patch('/aprendices/:id/recurso', actualizarRecurso);
 router.delete('/aprendices/:id', eliminarAprendiz);
-router.get('/aprendices', obtenerAprendicesKanban);
-router.get('/aprendices/todos', obtenerTodosAprendices);
 
 module.exports = router;
