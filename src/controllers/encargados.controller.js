@@ -1,67 +1,36 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const getEncargados = async (req, res, next) => {
+export const getEncargados = async (req, res, next) => {
   try {
-    const encargados = await prisma.usuario.findMany({
-      where: {
-        rol: { in: ['encargado_jcf', 'admin', 'lider_jcf'] }
-      },
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        email: true,
-        telefono: true,
-        rol: true,
-        activo: true,
-        fechaRegistro: true
-      },
-      orderBy: {
-        fechaRegistro: 'desc'
-      }
-    });
-    res.json(encargados);
+    const encargados = await prisma.encargado.findMany();
+    res.status(200).json(encargados);
   } catch (error) {
     next(error);
   }
 };
 
-const createEncargado = async (req, res, next) => {
+export const getEncargadoById = async (req, res, next) => {
   try {
-    const { nombre, apellido, email, password, telefono } = req.body;
-
-    const emailExistente = await prisma.usuario.findUnique({
-      where: { email }
+    const { id } = req.params;
+    const encargado = await prisma.encargado.findUnique({
+      where: { id: Number(id) }
     });
-
-    if (emailExistente) {
-      return res.status(400).json({ message: 'El correo electrónico ya está registrado.' });
+    if (!encargado) {
+      return res.status(404).json({ message: 'Encargado no encontrado' });
     }
+    res.status(200).json(encargado);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const nuevoEncargado = await prisma.usuario.create({
-      data: {
-        nombre,
-        apellido,
-        email,
-        password: hashedPassword,
-        telefono,
-        rol: 'encargado_jcf',
-        activo: true
-      },
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        email: true,
-        telefono: true,
-        rol: true,
-        activo: true
-      }
+export const createEncargado = async (req, res, next) => {
+  try {
+    const data = req.body;
+    const nuevoEncargado = await prisma.encargado.create({
+      data
     });
     res.status(201).json(nuevoEncargado);
   } catch (error) {
@@ -69,63 +38,28 @@ const createEncargado = async (req, res, next) => {
   }
 };
 
-const updateEncargado = async (req, res, next) => {
+export const updateEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { nombre, apellido, email, password, telefono, activo } = req.body;
-
-    if (email) {
-      const emailExistente = await prisma.usuario.findFirst({
-        where: {
-          email,
-          NOT: { id: Number(id) }
-        }
-      });
-      if (emailExistente) {
-        return res.status(400).json({ message: 'El correo electrónico ya está en uso por otro usuario.' });
-      }
-    }
-
-    const dataToUpdate = { nombre, apellido, email, telefono, activo };
-
-    if (password) {
-      dataToUpdate.password = await bcrypt.hash(password, 10);
-    }
-
-    const encargadoActualizado = await prisma.usuario.update({
+    const data = req.body;
+    const encargadoActualizado = await prisma.encargado.update({
       where: { id: Number(id) },
-      data: dataToUpdate,
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        email: true,
-        telefono: true,
-        rol: true,
-        activo: true
-      }
+      data
     });
-    res.json(encargadoActualizado);
+    res.status(200).json(encargadoActualizado);
   } catch (error) {
     next(error);
   }
 };
 
-const deleteEncargado = async (req, res, next) => {
+export const deleteEncargado = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await prisma.usuario.delete({
+    await prisma.encargado.delete({
       where: { id: Number(id) }
     });
     res.status(204).send();
   } catch (error) {
     next(error);
   }
-};
-
-module.exports = {
-  getEncargados,
-  createEncargado,
-  updateEncargado,
-  deleteEncargado
 };
