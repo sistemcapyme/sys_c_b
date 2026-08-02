@@ -1,6 +1,6 @@
 const { prisma } = require('../config/database');
 
-const ROL_ENCARGADO = 'encargado_jcf';
+const ROLES_ENCARGABLES = ['admin', 'lider_jcf', 'encargado_jcf'];
 
 const obtenerDistribucion = async (req, res, next) => {
   try {
@@ -27,8 +27,8 @@ const obtenerDistribucion = async (req, res, next) => {
 const obtenerEncargadosDisponibles = async (req, res, next) => {
   try {
     const encargados = await prisma.usuario.findMany({
-      where: { rol: ROL_ENCARGADO, activo: true },
-      select: { id: true, nombre: true, apellido: true }
+      where: { rol: { in: ROLES_ENCARGABLES }, activo: true },
+      select: { id: true, nombre: true, apellido: true, rol: true }
     });
     res.status(200).json({ success: true, data: encargados });
   } catch (error) {
@@ -42,7 +42,7 @@ const asignarEncargado = async (req, res, next) => {
     if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
     const { encargadoId } = req.body;
     if (encargadoId) {
-      const encargado = await prisma.usuario.findFirst({ where: { id: Number(encargadoId), rol: ROL_ENCARGADO } });
+      const encargado = await prisma.usuario.findFirst({ where: { id: Number(encargadoId), rol: { in: ROLES_ENCARGABLES }, activo: true } });
       if (!encargado) return res.status(400).json({ success: false, message: 'Encargado no válido' });
     }
     const joven = await prisma.jovenJcf.update({
@@ -79,4 +79,4 @@ module.exports = {
   obtenerEncargadosDisponibles,
   asignarEncargado,
   asignarEncargadoLote
-};  
+};
