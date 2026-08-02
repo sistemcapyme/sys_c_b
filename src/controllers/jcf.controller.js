@@ -13,6 +13,7 @@ const obtenerJovenes = async (req, res) => {
   try {
     const { activo, buscar, postulacionId, estadoGeo, municipioNegocio, estatus } = req.query;
     const where = {};
+    
     if (activo !== undefined) where.activo = activo === 'true';
     if (postulacionId) where.postulacionId = parseInt(postulacionId);
     if (estatus) where.estatus = estatus;

@@ -5,7 +5,10 @@ const obtenerUsuarios = async (req, res) => {
   try {
     const { rol, activo } = req.query;
     const where = {};
-    if (rol) where.rol = rol;
+    
+    if (rol) {
+      where.rol = rol.includes(',') ? { in: rol.split(',') } : rol;
+    }
     if (activo !== undefined) where.activo = activo === 'true';
 
     const usuarios = await prisma.usuario.findMany({
@@ -99,6 +102,7 @@ const actualizarPerfil = async (req, res) => {
   try {
     const { nombre, apellido, telefono, password } = req.body;
     const dataActualizar = {};
+    
     if (nombre) dataActualizar.nombre = nombre;
     if (apellido) dataActualizar.apellido = apellido;
     if (telefono !== undefined) dataActualizar.telefono = telefono;
