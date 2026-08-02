@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { verifyToken } = require('../middlewares/auth.middleware');
 
 const {
   getLideres,
@@ -37,6 +38,8 @@ const {
 } = require('../controllers/kanban.controller.js');
 
 const router = Router();
+
+router.use(verifyToken);
 
 router.get('/lideres', getLideres);
 router.get('/lideres/:id', getLiderById);
