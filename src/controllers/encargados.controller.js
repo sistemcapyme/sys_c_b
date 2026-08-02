@@ -1,13 +1,25 @@
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
+const bcrypt = require('bcryptjs');
 
-const prisma = new PrismaClient();
+const ROL_ENCARGADO = 'encargado_jcf';
 
 const getEncargados = async (req, res, next) => {
   try {
+    const { activo, buscar } = req.query;
+    const where = { rol: ROL_ENCARGADO };
+    if (activo !== undefined) where.activo = activo === 'true';
+    if (buscar) {
+      where.OR = [
+        { nombre: { contains: buscar } },
+        { apellido: { contains: buscar } },
+        { email: { contains: buscar } }
+      ];
+    }
     const encargados = await prisma.usuario.findMany({
-      where: { rol: 'encargado_jcf' }
+      where,
+      select: { id: true, nombre: true, apellido: true, email: true, activo: true, rol: true }
     });
-    res.status(200).json(encargados);
+    res.status(200).json({ success: true, data: encargados });
   } catch (error) {
     next(error);
   }
@@ -15,14 +27,14 @@ const getEncargados = async (req, res, next) => {
 
 const getEncargadoById = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const encargado = await prisma.usuario.findUnique({
-      where: { id: Number(id), rol: 'encargado_jcf' }
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+    const encargado = await prisma.usuario.findFirst({
+      where: { id, rol: ROL_ENCARGADO },
+      select: { id: true, nombre: true, apellido: true, email: true, activo: true, rol: true }
     });
-    if (!encargado) {
-      return res.status(404).json({ message: 'Encargado no encontrado' });
-    }
-    res.status(200).json(encargado);
+    if (!encargado) return res.status(404).json({ success: false, message: 'Encargado no encontrado' });
+    res.status(200).json({ success: true, data: encargado });
   } catch (error) {
     next(error);
   }
@@ -30,14 +42,24 @@ const getEncargadoById = async (req, res, next) => {
 
 const createEncargado = async (req, res, next) => {
   try {
-    const data = req.body;
+    const { nombre, apellido, email, password, activo } = req.body;
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Nombre, email y password son requeridos' });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
     const nuevoEncargado = await prisma.usuario.create({
       data: {
-        ...data,
-        rol: 'encargado_jcf'
-      }
+        nombre,
+        apellido,
+        email,
+        password: hashedPassword,
+        rol: ROL_ENCARGADO,
+        activo: activo !== undefined ? activo : true
+      },
+      select: { id: true, nombre: true, apellido: true, email: true, activo: true, rol: true }
     });
-    res.status(201).json(nuevoEncargado);
+    res.status(201).json({ success: true, data: nuevoEncargado });
   } catch (error) {
     next(error);
   }
@@ -45,13 +67,43 @@ const createEncargado = async (req, res, next) => {
 
 const updateEncargado = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const data = req.body;
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+    const existente = await prisma.usuario.findFirst({ where: { id, rol: ROL_ENCARGADO } });
+    if (!existente) return res.status(404).json({ success: false, message: 'Encargado no encontrado' });
+    const { nombre, apellido, email, password, activo } = req.body;
+    const data = {};
+    if (nombre !== undefined) data.nombre = nombre;
+    if (apellido !== undefined) data.apellido = apellido;
+    if (email !== undefined) data.email = email;
+    if (activo !== undefined) data.activo = activo;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      data.password = await bcrypt.hash(password, salt);
+    }
     const encargadoActualizado = await prisma.usuario.update({
-      where: { id: Number(id) },
-      data
+      where: { id },
+      data,
+      select: { id: true, nombre: true, apellido: true, email: true, activo: true, rol: true }
     });
-    res.status(200).json(encargadoActualizado);
+    res.status(200).json({ success: true, data: encargadoActualizado });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const toggleActivoEncargado = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+    const existente = await prisma.usuario.findFirst({ where: { id, rol: ROL_ENCARGADO } });
+    if (!existente) return res.status(404).json({ success: false, message: 'Encargado no encontrado' });
+    const encargadoActualizado = await prisma.usuario.update({
+      where: { id },
+      data: { activo: !existente.activo },
+      select: { id: true, nombre: true, apellido: true, email: true, activo: true, rol: true }
+    });
+    res.status(200).json({ success: true, data: encargadoActualizado });
   } catch (error) {
     next(error);
   }
@@ -59,10 +111,11 @@ const updateEncargado = async (req, res, next) => {
 
 const deleteEncargado = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    await prisma.usuario.delete({
-      where: { id: Number(id) }
-    });
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: 'ID inválido' });
+    const existente = await prisma.usuario.findFirst({ where: { id, rol: ROL_ENCARGADO } });
+    if (!existente) return res.status(404).json({ success: false, message: 'Encargado no encontrado' });
+    await prisma.usuario.delete({ where: { id } });
     res.status(204).send();
   } catch (error) {
     next(error);
@@ -74,5 +127,6 @@ module.exports = {
   getEncargadoById,
   createEncargado,
   updateEncargado,
+  toggleActivoEncargado,
   deleteEncargado
 };
